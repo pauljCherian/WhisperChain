@@ -1,6 +1,35 @@
 import socket
 import threading
 
+import hashlib 
+import os 
+import json
+import base64
+from crypto_utils import *
+
+# checks for valid registration, returns Boolean
+# assume at the end, will be hashed and salted 
+def validate_login(username, hashed_password_try): 
+    # retrieve the salt - when we implement hashing and salting
+    saved_salt = None
+    # retrieve the actual master password from the json file 
+    with open('store.json', 'r') as file:
+        data = json.load(file)
+
+    saved_password = data.get(username).get('password') # this is hashed and salted
+
+    # hash and salt the try 
+    #hashed_salted_try = hashlib.sha256(saved_salt + hashed_password_try.encode()).hexdigest()
+
+    # compare to the actual master password
+    if hashed_password_try == saved_password: 
+        return True 
+    else: 
+        return False 
+
+
+
+# connecting clients 
 def handle_client(conn, address):
     print(f"new connection from the client {address}")
     while True:
