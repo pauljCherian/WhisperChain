@@ -26,6 +26,25 @@ def validate_login(username, hashed_password_try):
         return True 
     else: 
         return False 
+    
+# Get the public key for a registered user
+def get_public_key(username): 
+    public_key = None
+    # json file entries: {username, public_key}
+    with open('public_keys.json', 'r') as file:
+        data = json.load(file)
+    
+    # looks up in the json file and retrieves 
+    public_key = data.get(username)
+
+    return public_key
+
+
+
+# saves public key to the public_key.json file 
+def store_public_key(public_key): 
+    pass 
+
 
 
 
