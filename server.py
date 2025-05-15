@@ -5,6 +5,8 @@ import hashlib
 import os 
 import json
 import base64
+import uuid
+
 from crypto_utils import *
 
 # checks for valid registration, returns Boolean
@@ -45,7 +47,34 @@ def get_public_key(username):
 def store_public_key(public_key): 
     pass 
 
+def begin_round():
+    with open('store.json', 'r') as file:
+        data = json.load(file)
+        global curr_tokens
+        curr_tokens = {}
+        for username, user_info in data.items():
+            if user_info.get('role') == 'Sender':
+                curr_tokens[username] = str(uuid.uuid3())
 
+def send_message(sender, recipient, ciphertext):
+    global active_tokens
+    token = active_tokens.get(sender)
+
+    if not token: #meaning its null or None or something so there's no token for the sender
+        print(f"{sender} does not have any remaining tokens for this round")
+        return
+    #get message and puts it in the inbox of the recipient
+
+
+    active_tokens[sender] = None #revokes tokens from the sender
+    print(f"{sender} has sent a message to {recipient}. Now {sender} has no remaining tokens.")
+    return
+
+
+def end_round():
+    global active_tokens
+    active_tokens = {} #revokes tokens and resets list to empty for next round
+    print("Round has ended. Tokens have been revoked")
 
 
 # connecting clients 
