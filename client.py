@@ -1,8 +1,9 @@
 import json
 import base64
-
 import socket
-
+PRIV_KEY = ""
+USERNAME = ""
+CLIENT_SOCKET = None
 
 # helper functions
 def write_json(filename, data):
@@ -12,7 +13,6 @@ def write_json(filename, data):
 def read_json(filename):
     with open(filename, 'r') as json_file:
         return json.load(json_file)
-
 
 def connect_to_server():
     # get the hostname
@@ -27,23 +27,44 @@ def connect_to_server():
     return client_socket
 
 def main():
-    client_socket = connect_to_server()
+    CLIENT_SOCKET = connect_to_server()
     print("Connected to the server")
+    login_menu() 
+    user_menu()
+    # while True:
+    #     user_menu()
+    #     # get message from user to send to the server
+    #     message = input("Enter message to send or quit to quit): ")
+        
+    #     if message.lower() == 'quit':
+    #         break
+    #     # need to encode the message to send (must be bytes)    
+    #     # send the message to sever
+    #     client_socket.send(message.encode())
+        
+    #     # receive the response from the server, making sure to decode the bytes back to a string
+    #     response = client_socket.recv(1024).decode()
+    #     print(f"Response from server: {response}")
+    
+    # print("Disconnected from the server")
+
+def login_menu():
+    print("Welcome to the Private Message Service!")
     while True:
-        # get message from user to send to the server
-        message = input("Enter message to send or quit to quit): ")
-        
-        if message.lower() == 'quit':
+        print("Hello! Please type 'register' to register if you do not have an account. Otherwise, type 'login' to login. Type 'exit' to end the program.")
+        decision = input("Enter desire: ")
+        if decision.lower() == "exit":
             break
-        # need to encode the message to send (must be bytes)    
-        # send the message to sever
-        client_socket.send(message.encode())
-        
-        # reveive the response from the server, making sure to decode the bytes bak to a string
-        response = client_socket.recv(1024).decode()
-        print(f"Response from server: {response}")
-        
-    print("Disconnected from the server")
+        elif decision.lower() == "register":
+            username = input("Enter username: ")
+            password = input("Enter password: ")
+            create_account(username, password)
+            user_menu()
+        elif decision.lower() == "login":
+            username = input("Enter username: ")
+            password = input("Enter password: ")
+            login(username, password)
+            user_menu()
 
 ## the menu for if the client is a user
 def user_menu():
@@ -71,26 +92,24 @@ def user_menu():
         elif choice == "4":
             print("Goodbye")
             disconnect()
+            break
         else:
             print("Invalid entry. Please try again")
+    print("Disconnected from the server")
 
 def create_account(username, password):
     # Account category is automatically "user"
     account_cat = "user"
 
     ## generate public/private key pair from a password
-
     ## store private key locally as a variable
+    PRIV_KEY = password
+    pub_key = password
 
     ## send public key to server
 
     ##automatically login
     login(username, password)
-    # Generates public/private key pair from password
-    # Send public key to server
-    # Sever calls store_public_key()
-    # Hash & store private key
-    # Automatically login 
 
 def login(username, password): 
     # Hash & salt the password
@@ -103,18 +122,21 @@ def login(username, password):
 
 def send_message(message, recipient):
     # Gets the public key from the server
+
     # Encrypts the message with that public key
+
     # Sends the encrypted message to the server with the recipient's name attached (for storage in their "inbox") 
     pass
 
 def read_messages():
-    pass
     # Asks the server for messages associated with their account
     # (so send their username under the hood)
+    # use USERNAME
+
+    pass
 
 def disconnect():
-    # Tell the server you've disconnected, log out (automatic) 
-    pass
+    socket.disconnect()
 
 if __name__ == "__main__":
     main()
