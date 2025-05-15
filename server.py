@@ -42,11 +42,38 @@ def get_public_key(username):
 
 
 # saves public key to the public_key.json file 
-def store_public_key(public_key): 
-    pass 
+def store_public_key(username, public_key): 
+    # json file entries: {username, public_key}
+    with open('public_keys.json', 'r') as file:
+        data = json.load(file)
+    
+    # enters in a new public key for a specified user
+    data[username] = public_key
 
+    # write into json file 
+    with open('public_keys.json', 'w') as file: 
+        json.dump(data, file)
 
+# stores encrypted message in a json file related for the recipient 
+def store_message(recipient, ciphertext, round_number): 
+    # json file entries: {username, {round_number: [list of messages]}}
+    with open('messages.json', 'r') as file:
+        data = json.load(file)
+    
+    # check the recipient exists
+    if recipient not in data:
+        data[recipient] = {}
 
+    # check the round exists
+    if round_number not in data[recipient]:
+        data[recipient][round_number] = []
+
+    # append the new message
+    data[recipient][round_number].append(ciphertext)
+
+    # write updated data back
+    with open('messages.json', 'w') as f:
+        json.dump(data)
 
 # connecting clients 
 def handle_client(conn, address):
