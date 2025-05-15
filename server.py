@@ -1,10 +1,12 @@
 import socket
 import threading
-
+import json
 import hashlib 
 import os 
-import json
 import base64
+
+
+
 from crypto_utils import *
 
 # checks for valid registration, returns Boolean
@@ -39,32 +41,59 @@ def get_public_key(username):
 
     return public_key
 
-
+def handle_request(request_data):
+    """ 
+    Handles a request from the client. Requests are in the form of dictionary. The output of the the function
+    is the string response that the server should send back to the client.
+    """
+    try:
+        request = eval(request_data)  
+        request_type = request.get('type')
+        
+        if request_type == 'get_public_key':
+            username = request.get('username')
+            if not username:
+                return str({'error': 'username not provided'})
+            
+            public_key = get_public_key(username)
+            if public_key:
+                return str({'type': 'public_key', 'key': public_key})
+            else:
+                return str({'error': 'public key not found'})
+        else:
+            return str({'error': 'invalid request type'})
+        
+        # ADD MORE REQUEST TYPES HERE. SHOULD BE ABLE TO HANDLE ALL OTHER REQUESTS FROM CLIENT
+    except:
+        return str({'error': 'invalid request format'})
 
 # saves public key to the public_key.json file 
 def store_public_key(public_key): 
     pass 
 
-
-
-
 # connecting clients 
 def handle_client(conn, address):
-    print(f"new connection from the client {address}")
+    print(f"new connection from client {address}")
     while True:
         try:
-            # receive data from client, max 
+            # receive data from client
             data = conn.recv(1024).decode()
             if not data:
-                # if data is not received break
                 break
-            print(f"from {address}: {data}")
-            # Echo back to client
-            conn.send(data.encode())
-        except:
+                
+            print(f"Received from {address}: {data}")
+            
+            # handle the request and get response
+            response = handle_request(data)
+            
+            # send response back to client
+            conn.send(response.encode())
+            
+        except Exception as e:
+            print(f"Error handling client {address}: {e}")
             break
     
-    print(f"connection from the client {address} closed")
+    print(f"connection from client {address} closed")
     conn.close()
 
 def main():
@@ -73,7 +102,7 @@ def main():
     host = socket.gethostname()
     port = 5001  #pick a port above 1000 so not conflicting 
     
-    # Create a socket object
+    # create a socket object
     server_socket = socket.socket()
     server_socket.bind((host, port)) 
     server_socket.listen(8) # allow max 8 connections

@@ -23,15 +23,15 @@ def connect_to_server():
     client_socket = socket.socket()
     client_socket.connect((host, port))  # connect to the server
     
-    print("Connected to the server")
+    print("connected to the server")
     return client_socket
 
 def main():
     client_socket = connect_to_server()
-    print("Connected to the server")
+    print("connected to the server")
     while True:
         # get message from user to send to the server
-        message = input("Enter message to send or quit to quit): ")
+        message = input("enter message to send or quit to quit): ")
         
         if message.lower() == 'quit':
             break
@@ -41,9 +41,9 @@ def main():
         
         # reveive the response from the server, making sure to decode the bytes bak to a string
         response = client_socket.recv(1024).decode()
-        print(f"Response from server: {response}")
+        print(f"response from server: {response}")
         
-    print("Disconnected from the server")
+    print("disconnected from the server")
 
 ## the menu for if the client is a user
 def user_menu():
@@ -101,11 +101,44 @@ def login(username, password):
     # return validation, account_cat
     pass 
 
+
+def send_request_to_server(client_socket,request_type, data=None):
+    if data is None:
+        data = {}
+    #set up the initial dictionary type to send to the server 
+    request = {'type': request_type}
+    
+    #add all pairs from data dictionary to the request dictionary
+    for key, value in data.items():
+        request[key] = value
+    
+    # convert the request dict to string, encode it, and then send it to the server
+    request_str = str(request)
+    client_socket.send(request_str.encode())
+    
+    # receive and parse response from the server
+    response = client_socket.recv(1024).decode()
+    return eval(response)  # Convert string representation of dict back to dict
+
+def get_public_key(username):
+    response = send_request_to_server('get_public_key', {'username': username})
+    
+    # if the response is a public key type of message then return the key
+    if response.get('type') == 'public_key':
+        return response.get('key')
+    
+    return None
+
 def send_message(message, recipient):
-    # Gets the public key from the server
-    # Encrypts the message with that public key
-    # Sends the encrypted message to the server with the recipient's name attached (for storage in their "inbox") 
-    pass
+    # get the recipient's public key
+    public_key = get_public_key(recipient)
+    if not public_key:
+        print(f"could not get public key for {recipient}")
+        return
+    
+    #FINISH ENCRYPTING THE MESSAG WITH THE PUBLIC KEY
+    
+    print(f"message would be sent to {recipient} using their public key")
 
 def read_messages():
     pass
