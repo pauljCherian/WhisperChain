@@ -4,7 +4,7 @@ import json
 import hashlib 
 import os 
 import base64
-
+import uuid
 
 
 from crypto_utils import *
@@ -68,8 +68,71 @@ def handle_request(request_data):
         return str({'error': 'invalid request format'})
 
 # saves public key to the public_key.json file 
-def store_public_key(public_key): 
-    pass 
+def store_public_key(username, public_key): 
+    # json file entries: {username, public_key}
+    with open('public_keys.json', 'r') as file:
+        data = json.load(file)
+    
+    # enters in a new public key for a specified user
+    data[username] = public_key
+
+    # write into json file 
+    with open('public_keys.json', 'w') as file: 
+        json.dump(data, file)
+
+# stores encrypted message in a json file related for the recipient 
+def store_message(recipient, ciphertext, round_number): 
+    # json file entries: {username, {round_number: [list of messages]}}
+    with open('messages.json', 'r') as file:
+        data = json.load(file)
+    
+    # check the recipient exists
+    if recipient not in data:
+        data[recipient] = {}
+
+
+    # check the round exists
+    if round_number not in data[recipient]:
+        data[recipient][round_number] = []
+
+    # append the new message
+    data[recipient][round_number].append(ciphertext)
+    
+    # write updated data back
+    with open('messages.json', 'w') as f:
+        json.dump(data)
+
+def begin_round():
+    with open('store.json', 'r') as file:
+        data = json.load(file)
+        global curr_tokens
+        curr_tokens = {}
+        for username, user_info in data.items():
+            if user_info.get('role') == 'Sender':
+                curr_tokens[username] = str(uuid.uuid3())
+
+def send_message(sender, recipient, ciphertext):
+    global active_tokens
+    token = active_tokens.get(sender)
+
+    if not token: #meaning its null or None or something so there's no token for the sender
+        print(f"{sender} does not have any remaining tokens for this round")
+        return
+    #get message and puts it in the inbox of the recipient
+
+
+    active_tokens[sender] = None #revokes tokens from the sender
+    print(f"{sender} has sent a message to {recipient}. Now {sender} has no remaining tokens.")
+    return
+
+
+
+def end_round():
+    global active_tokens
+    active_tokens = {} #revokes tokens and resets list to empty for next round
+    print("Round has ended. Tokens have been revoked")
+
+
 
 # connecting clients 
 def handle_client(conn, address):
