@@ -7,7 +7,7 @@ import base64
 import uuid
 
 
-from crypto_utils import *
+# from crypto_utils import *
 
 # checks for valid registration, returns Boolean
 # assume at the end, will be hashed and salted 
@@ -47,25 +47,49 @@ def handle_request(request_data):
     is the string response that the server should send back to the client.
     """
     try:
-        request = eval(request_data)  
+        request = eval(request_data)
         request_type = request.get('type')
         
         if request_type == 'get_public_key':
             username = request.get('username')
             if not username:
-                return str({'error': 'username not provided'})
+                return str({'error': 'Username not provided'})
             
             public_key = get_public_key(username)
             if public_key:
                 return str({'type': 'public_key', 'key': public_key})
             else:
-                return str({'error': 'public key not found'})
+                return str({'error': 'Public key not found'})
+                
+        elif request_type == 'send_message':
+            recipient = request.get('recipient')
+            encrypted_message = request.get('message')
+            
+            if not recipient or not encrypted_message:
+                return str({'error': 'Missing recipient or message'})
+            
+            # Store the encrypted message in the recipient's inbox
+            try:
+                with open('messages.json', 'r') as f:
+                    messages = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                messages = {}
+            
+            if recipient not in messages:
+                messages[recipient] = []
+            
+            messages[recipient].append(encrypted_message)
+            
+            with open('messages.json', 'w') as f:
+                json.dump(messages, f)
+            
+            return str({'type': 'success', 'message': 'Message stored successfully'})
+            
         else:
-            return str({'error': 'invalid request type'})
-        
-        # ADD MORE REQUEST TYPES HERE. SHOULD BE ABLE TO HANDLE ALL OTHER REQUESTS FROM CLIENT
-    except:
-        return str({'error': 'invalid request format'})
+            return str({'error': 'Invalid request type'})
+            
+    except Exception as e:
+        return str({'error': f'Invalid request format: {str(e)}'})
 
 # saves public key to the public_key.json file 
 def store_public_key(username, public_key): 
