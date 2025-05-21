@@ -1,11 +1,11 @@
 import socket
 import threading
-
+import json
 import hashlib 
 import os 
-import json
 import base64
 import uuid
+
 
 from crypto_utils import *
 from message_types import MESSAGE_TYPES, parse_message, create_message
@@ -13,6 +13,10 @@ from message_types import MESSAGE_TYPES, parse_message, create_message
 # Global variables for round management
 current_round = 1
 inboxes = {}  # Dictionary to store all user inboxes
+
+
+# from crypto_utils import *
+
 
 # checks for valid registration, returns Boolean
 # assume at the end, will be hashed and salted 
@@ -46,7 +50,55 @@ def get_public_key(username):
 
     return public_key
 
-
+def handle_request(request_data):
+    """ 
+    Handles a request from the client. Requests are in the form of dictionary. The output of the the function
+    is the string response that the server should send back to the client.
+    """
+    try:
+        request = eval(request_data)
+        request_type = request.get('type')
+        
+        if request_type == 'get_public_key':
+            username = request.get('username')
+            if not username:
+                return str({'error': 'Username not provided'})
+            
+            public_key = get_public_key(username)
+            if public_key:
+                return str({'type': 'public_key', 'key': public_key})
+            else:
+                return str({'error': 'Public key not found'})
+                
+        elif request_type == 'send_message':
+            recipient = request.get('recipient')
+            encrypted_message = request.get('message')
+            
+            if not recipient or not encrypted_message:
+                return str({'error': 'Missing recipient or message'})
+            
+            # Store the encrypted message in the recipient's inbox
+            try:
+                with open('messages.json', 'r') as f:
+                    messages = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                messages = {}
+            
+            if recipient not in messages:
+                messages[recipient] = []
+            
+            messages[recipient].append(encrypted_message)
+            
+            with open('messages.json', 'w') as f:
+                json.dump(messages, f)
+            
+            return str({'type': 'success', 'message': 'Message stored successfully'})
+            
+        else:
+            return str({'error': 'Invalid request type'})
+            
+    except Exception as e:
+        return str({'error': f'Invalid request format: {str(e)}'})
 
 # saves public key to the public_key.json file 
 def store_public_key(username, public_key): 
@@ -134,6 +186,7 @@ def send_message(sender, recipient, ciphertext):
     return
 
 
+
 def end_round():
     global active_tokens
     active_tokens = {} #revokes tokens and resets list to empty for next round
@@ -143,7 +196,7 @@ def end_round():
 
 # connecting clients 
 def handle_client(conn, address):
-    print(f"new connection from the client {address}")
+    print(f"new connection from client {address}")
     while True:
         try:
             # receive data from client
@@ -151,6 +204,7 @@ def handle_client(conn, address):
             if not data:
                 break
                 
+
             # Parse the message
             message_type, message_data = parse_message(data)
             if not message_type:
@@ -219,9 +273,20 @@ def handle_client(conn, address):
 
         except Exception as e:
             print(f"Error handling client {address}: {str(e)}")
+
+            print(f"Received from {address}: {data}")
+            
+            # handle the request and get response
+            response = handle_request(data)
+            
+            # send response back to client
+            conn.send(response.encode())
+            
+        except Exception as e:
+            print(f"Error handling client {address}: {e}")
             break
     
-    print(f"connection from the client {address} closed")
+    print(f"connection from client {address} closed")
     conn.close()
 
 def main():
@@ -233,7 +298,7 @@ def main():
     host = socket.gethostname()
     port = 5001  #pick a port above 1000 so not conflicting 
     
-    # Create a socket object
+    # create a socket object
     server_socket = socket.socket()
     server_socket.bind((host, port)) 
     server_socket.listen(8) # allow max 8 connections
