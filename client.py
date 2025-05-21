@@ -2,6 +2,8 @@ import json
 import base64
 
 import socket
+from cryptography.hazmat.primitives import padding, hashes
+from cryptography.hazmat.primitives.asymmetric import padding, RSA
 
 
 # helper functions
@@ -130,15 +132,50 @@ def get_public_key(username):
     return None
 
 def send_message(message, recipient):
-    # get the recipient's public key
+    # Get the recipient's public key
     public_key = get_public_key(recipient)
     if not public_key:
-        print(f"could not get public key for {recipient}")
+        print(f"Could not get public key for {recipient}")
         return
     
-    #FINISH ENCRYPTING THE MESSAG WITH THE PUBLIC KEY
+    # Encrypt the message with the recipient's public key
+    encrypted_message = encrypt_message(message, public_key)
     
-    print(f"message would be sent to {recipient} using their public key")
+    # Send the encrypted message to the server
+    request_data = {
+        'type': 'send_message',
+        'recipient': recipient,
+        'message': encrypted_message
+    }
+    
+    # Send the request to the server
+    response = send_request_to_server('send_message', request_data)
+    
+    if 'error' in response:
+        print(f"Error sending message: {response['error']}")
+    else:
+        print(f"Message sent successfully to {recipient}")
+
+def encrypt_message(message, public_key):
+    """
+    Encrypt a message using the recipient's public key.
+    Returns the encrypted message as a base64 string.
+    """
+    # Convert the public key from string to RSA key object
+    public_key_obj = load_public_key(public_key)
+    
+    # Encrypt the message
+    encrypted = public_key_obj.encrypt(
+        message.encode(),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    
+    # Convert the encrypted bytes to base64 string for transmission
+    return base64.b64encode(encrypted).decode()
 
 def read_messages():
     pass
