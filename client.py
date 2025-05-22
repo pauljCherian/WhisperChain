@@ -1,5 +1,6 @@
 import json
 import base64
+import os
 
 import socket
 
@@ -7,6 +8,8 @@ from message_types import MESSAGE_TYPES, create_message, parse_message
 
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.asymmetric import padding, RSA
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
 # Global variables
@@ -104,14 +107,76 @@ def create_account(username, password):
     # Automatically login 
 
 def login(username, password): 
-    # Hash & salt the password
-
     # Send username and hashed password to the server
-    # interacts with validate login function to get 1. Validation and 2. Account category
-    
-    # return validation, account_cat
-    pass 
+    # interacts with validate login function to get 1. Validation and 2. Account categor
 
+    # Hash & salt the password
+    salt = os.urandom(16)
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+    )
+    hashed_password = base64.b64encode(kdf.derive(password.encode())).decode()
+    
+    # Generate RSA key pair
+    private_key = RSA.generate_2048()
+    public_key = private_key.public_key()
+    
+    # Store private key in JSON file
+    private_key_bytes = private_key.private_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PrivateFormat.Raw,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+    private_key_b64 = base64.b64encode(private_key_bytes).decode()
+    
+    credentials = {
+        'username': username,
+        'private_key': private_key_b64
+    }
+    write_json('client_credentials.json', credentials)
+    
+    # Convert public key to base64 for transmission
+    public_key_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw
+    )
+    public_key_b64 = base64.b64encode(public_key_bytes).decode()
+    
+    # Send login request to server
+    login_data = {
+        'username': username,
+        'password': hashed_password,
+        'public_key': public_key_b64
+    }
+    
+    response = send_request_to_server(client_socket, 'login', login_data)
+    
+    # talk to server, return validation, account_cat
+    if response.get('type') == 'SUCCESS':
+        global current_user
+        current_user = username
+        print(f"Successfully logged in as {username}")
+        return True, response.get('account_cat')
+    else:
+        print(f"Login failed: {response.get('error', 'Unknown error')}")
+        return False, None
+
+def load_private_key():
+    # Load the private key from the credentials file
+    try:
+        credentials = read_json('client_credentials.json')
+        private_key_b64 = credentials['private_key']
+        private_key_bytes = base64.b64decode(private_key_b64)
+        return serialization.load_der_private_key(
+            private_key_bytes,
+            password=None
+        )
+    except Exception as e:
+        print(f"Error loading private key: {str(e)}")
+        return None
 
 def send_request_to_server(client_socket,request_type, data=None):
     if data is None:
@@ -259,11 +324,42 @@ def encrypt_message(message, public_key):
     # Convert the encrypted bytes to base64 string for transmission
     return base64.b64encode(encrypted).decode()
 
+def decrypt_message(encrypted_message, private_key=None):
+    # Decrypt a message using the private key.
+    # If private_key is not provided, it will be loaded from the credentials file.
+    if private_key is None:
+        private_key = load_private_key()
+        if private_key is None:
+            raise ValueError("Could not load private key")
+    
+    try:
+        # Decode the base64 message
+        encrypted_bytes = base64.b64decode(encrypted_message)
+        
+        # Decrypt the message
+        decrypted = private_key.decrypt(
+            encrypted_bytes,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+        
+        return decrypted.decode()
+    except Exception as e:
+        raise ValueError(f"Decryption failed: {str(e)}")
 
 def read_messages():
     """Retrieve and display messages for the current round"""
     if not current_user:
         print("Error: Not logged in")
+        return False
+
+    # Load private key for decryption
+    private_key = load_private_key()
+    if private_key is None:
+        print("Error: Could not load private key")
         return False
 
     # Ask user which round to retrieve messages from
@@ -324,11 +420,6 @@ def encrypt_message(message, public_key):
     # Implement encryption using the public key
     # This is a placeholder - implement your encryption logic here
     return base64.b64encode(message.encode()).decode()
-
-def decrypt_message(encrypted_message, private_key):
-    # Implement decryption using the private key
-    # This is a placeholder - implement your decryption logic here
-    return base64.b64decode(encrypted_message.encode()).decode()
 
 def disconnect():
     # Tell the server you've disconnected, log out (automatic) 
