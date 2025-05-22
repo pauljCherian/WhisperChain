@@ -1,19 +1,22 @@
 import json
 import base64
-
 import socket
-
-from message_types import MESSAGE_TYPES, create_message, parse_message
-
+from message_types import (
+    LOGIN, SEND_MESSAGE, REQUEST_MESSAGES, FLAG_MESSAGE,
+    GET_FLAGGED_MESSAGES, BAN_USER, MAKE_MODERATOR,
+    SUCCESS, ERROR, create_message, parse_message
+)
 from cryptography.hazmat.primitives import padding, hashes
-from cryptography.hazmat.primitives.asymmetric import padding, RSA
-
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+from cryptography.hazmat.primitives import serialization
 
 # Global variables
 current_user = None
 current_round = 1
 client_socket = None
 private_key = None
+user_role = None  # Store the current user's role
 
 # helper functions
 def write_json(filename, data):
@@ -24,116 +27,165 @@ def read_json(filename):
     with open(filename, 'r') as json_file:
         return json.load(json_file)
 
-
 def connect_to_server():
-    # get the hostname
+    """Connect to the server"""
     host = socket.gethostname()
-    port = 5001  # server port number
-
-    # create a socket object
-    client_socket = socket.socket()
-    client_socket.connect((host, port))  # connect to the server
+    port = 5001
     
-    print("connected to the server")
+    client_socket = socket.socket()
+    client_socket.connect((host, port))
+    print("Connected to server")
     return client_socket
 
-def main():
-    client_socket = connect_to_server()
-    print("connected to the server")
-    while True:
-        # get message from user to send to the server
-        message = input("enter message to send or quit to quit): ")
-        
-        if message.lower() == 'quit':
-            break
-        # need to encode the message to send (must be bytes)    
-        # send the message to sever
-        client_socket.send(message.encode())
-        
-        # reveive the response from the server, making sure to decode the bytes bak to a string
-        response = client_socket.recv(1024).decode()
-        print(f"response from server: {response}")
-        
-    print("disconnected from the server")
+def load_user_role(username):
+    """Load user role from roles.json"""
+    try:
+        with open('roles.json', 'r') as f:
+            roles = json.load(f)
+            return roles.get(username, "user")  # Default to "user" if role not found
+    except FileNotFoundError:
+        return "user"  # Default to "user" if file not found
 
-## the menu for if the client is a user
+def login(username, password):
+    """Login to the system"""
+    global current_user, user_role
+    
+    success, data = send_request(LOGIN, {
+        "username": username,
+        "password": password
+    })
+    
+    if success:
+        current_user = username
+        user_role = data.get("role")
+        print(f"Login successful! Role: {user_role}")
+        return True
+    return False
+
+def create_account(username, password):
+    """Create a new account"""
+    # Hash & salt the password (placeholder for actual implementation)
+    hashed_password = password  # Replace with actual hashing
+    
+    # Generate key pair
+    global private_key
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+    public_key = private_key.public_key()
+    
+    # Send account creation request to server
+    request_data = {
+        'type': 'create_account',
+        'username': username,
+        'password': hashed_password,
+        'public_key': public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode()
+    }
+    
+    response = send_request("LOGIN", request_data)
+    
+    if response.get('type') == 'success':
+        print("Account created successfully")
+        # Automatically login
+        return login(username, password)
+    else:
+        print(f"Account creation failed: {response.get('error', 'Unknown error')}")
+        return False
+
 def user_menu():
+    """Main menu for regular users"""
     while True:
-        print("\nWhat would you like to do?")
+        print("\nUser Menu:")
         print("[1] Send a message")
-        print("[2] Retrieve your messages")
+        print("[2] Read messages")
         print("[3] Flag a message")
-        print("[4] Exit the program")
-        choice = input("Enter a number: ")
+        print("[4] Exit")
+        
+        choice = input("Enter your choice: ")
+        
         if choice == "1":
-            print("[1] Send a message")
-            recipient = input("Who is your message to? ")
-            message = input("What is your message? ")
-            send_message(message, recipient)
+            recipient = input("Recipient username: ")
+            message = input("Message: ")
+            send_message(recipient, message)
         elif choice == "2":
-            print("[2] Retrieve your messages")
             read_messages()
         elif choice == "3":
-            print("[3] Flag a message")
-            message_id = input("Enter the message ID to flag: ")
-            reason = input("Enter reason for flagging: ")
+            message_id = input("Message ID to flag: ")
+            reason = input("Reason for flagging: ")
             flag_message(message_id, reason)
         elif choice == "4":
             print("Goodbye")
-            disconnect()
             break
         else:
-            print("Invalid entry. Please try again")
+            print("Invalid choice")
 
-def create_account(username, password):
-    # Account category is automatically "user"
-    account_cat = "user"
-
-    ## generate public/private key pair from a password
-
-    ## store private key locally as a variable
-
-    ## send public key to server
-
-    ##automatically login
-    login(username, password)
-    # Generates public/private key pair from password
-    # Send public key to server
-    # Sever calls store_public_key()
-    # Hash & store private key
-    # Automatically login
-
-
-def login(username, password): 
-    # Hash & salt the password
-
-    # Send username and hashed password to the server
-    # interacts with validate login function to get 1. Validation and 2. Account category
+def main():
+    """Main function to start the client"""
+    global client_socket
+    client_socket = connect_to_server()
     
-    # return validation, account_cat
-    pass 
+    while True:
+        print("\nWelcome to the Secure Messaging System")
+        print("[1] Login")
+        print("[2] Exit")
+        
+        choice = input("Enter your choice: ")
+        
+        if choice == "1":
+            username = input("Enter username: ")
+            password = input("Enter password: ")
+            if login(username, password):
+                if user_role == "admin":
+                    admin_menu()
+                elif user_role == "moderator":
+                    moderator_menu()
+                else:
+                    user_menu()
+        elif choice == "2":
+            print("Goodbye")
+            break
+        else:
+            print("Invalid choice")
+    
+    if client_socket:
+        client_socket.close()
 
-
-def send_request_to_server(client_socket,request_type, data=None):
+def send_request(request_type, data=None):
+    """Send a request to the server and get response"""
+    global client_socket
+    
     if data is None:
         data = {}
-    #set up the initial dictionary type to send to the server 
-    request = {'type': request_type}
     
-    #add all pairs from data dictionary to the request dictionary
-    for key, value in data.items():
-        request[key] = value
-    
-    # convert the request dict to string, encode it, and then send it to the server
-    request_str = str(request)
-    client_socket.send(request_str.encode())
-    
-    # receive and parse response from the server
-    response = client_socket.recv(1024).decode()
-    return eval(response)  # Convert string representation of dict back to dict
+    try:
+        # Create and send message
+        message = create_message(request_type, data)
+        print(f"Sending: {message}")
+        client_socket.send(message.encode())
+        
+        # Get response
+        response = client_socket.recv(1024).decode()
+        print(f"Received: {response}")
+        
+        # Parse response
+        response_type, response_data = parse_message(response)
+        
+        if response_type == ERROR:
+            print(f"Error: {response_data.get('error', 'Unknown error')}")
+            return False, response_data.get('error', 'Unknown error')
+            
+        return True, response_data
+        
+    except Exception as e:
+        print(f"Error in send_request: {str(e)}")
+        return False, str(e)
 
 def get_public_key(username):
-    response = send_request_to_server('get_public_key', {'username': username})
+    response = send_request("LOGIN", {'username': username})
     
     # if the response is a public key type of message then return the key
     if response.get('type') == 'public_key':
@@ -141,57 +193,39 @@ def get_public_key(username):
     
     return None
 
-def send_message(message, recipient):
-
-    # Get the public key from the server
-    public_key = get_public_key(recipient)
-    if not public_key:
-        print("Error: Could not retrieve recipient's public key")
+def send_message(recipient, content):
+    """Send a message to another user"""
+    if not current_user:
+        print("Not logged in")
         return False
-
-    # Encrypt the message with the recipient's public key
-    encrypted_message = encrypt_message(message, public_key)
+        
+    success, data = send_request(SEND_MESSAGE, {
+        "sender": current_user,
+        "recipient": recipient,
+        "content": content
+    })
     
-    # Create the message data
-    message_data = {
-        'sender': current_user,  # You'll need to track the current user
-        'recipient': recipient,
-        'content': encrypted_message
-    }
-    
-    # Send the message to the server
-    message_str = create_message(MESSAGE_TYPES['SEND_MESSAGE'], message_data)
-    client_socket.send(message_str.encode())
-    
-    # Get response from server
-    response = client_socket.recv(1024).decode()
-    response_type, response_data = parse_message(response)
-    
-    if response_type == 'SUCCESS':
-        print("Message sent successfully!")
+    if success:
+        print("Message sent successfully")
         return True
-    else:
-        print(f"Error sending message: {response_data.get('error', 'Unknown error')}")
-        return False
+    return False
 
 def flag_message(message_id, reason):
-    message_data = {
-        'message_id': message_id,
-        'reason': reason
-    }
-    
-    message_str = create_message(MESSAGE_TYPES['FLAG_MESSAGE'], message_data)
-    client_socket.send(message_str.encode())
-    
-    response = client_socket.recv(1024).decode()
-    response_type, response_data = parse_message(response)
-    
-    if response_type == 'SUCCESS':
-        print("Message flagged successfully!")
-        return True
-    else:
-        print(f"Error flagging message: {response_data.get('error', 'Unknown error')}")
+    """Flag a message for review"""
+    if not current_user:
+        print("Not logged in")
         return False
+        
+    success, data = send_request(FLAG_MESSAGE, {
+        "username": current_user,
+        "message_id": message_id,
+        "reason": reason
+    })
+    
+    if success:
+        print("Message flagged successfully")
+        return True
+    return False
 
 def review_message(message_id, action):
     if action not in ['approve', 'reject']:
@@ -203,7 +237,7 @@ def review_message(message_id, action):
         'action': action
     }
     
-    message_str = create_message(MESSAGE_TYPES['REVIEW_MESSAGE'], message_data)
+    message_str = create_message(REVIEW_MESSAGE, message_data)
     client_socket.send(message_str.encode())
     
     response = client_socket.recv(1024).decode()
@@ -215,29 +249,6 @@ def review_message(message_id, action):
     else:
         print(f"Error reviewing message: {response_data.get('error', 'Unknown error')}")
         return False
-    # Get the recipient's public key
-    public_key = get_public_key(recipient)
-    if not public_key:
-        print(f"Could not get public key for {recipient}")
-        return
-    
-    # Encrypt the message with the recipient's public key
-    encrypted_message = encrypt_message(message, public_key)
-    
-    # Send the encrypted message to the server
-    request_data = {
-        'type': 'send_message',
-        'recipient': recipient,
-        'message': encrypted_message
-    }
-    
-    # Send the request to the server
-    response = send_request_to_server('send_message', request_data)
-    
-    if 'error' in response:
-        print(f"Error sending message: {response['error']}")
-    else:
-        print(f"Message sent successfully to {recipient}")
 
 def encrypt_message(message, public_key):
     """
@@ -260,71 +271,31 @@ def encrypt_message(message, public_key):
     # Convert the encrypted bytes to base64 string for transmission
     return base64.b64encode(encrypted).decode()
 
-
 def read_messages():
-    """Retrieve and display messages for the current round"""
+    """Read messages for the current user"""
     if not current_user:
-        print("Error: Not logged in")
+        print("Not logged in")
         return False
-
-    # Ask user which round to retrieve messages from
-    print("\nAvailable rounds:")
-    print("[1] Current round")
-    print("[2] Previous round")
-    print("[3] Enter specific round number")
+        
+    success, data = send_request(REQUEST_MESSAGES, {
+        "username": current_user
+    })
     
-    choice = input("Enter your choice (1-3): ")
-    
-    if choice == "1":
-        round_number = current_round
-    elif choice == "2":
-        round_number = current_round - 1
-    elif choice == "3":
-        try:
-            round_number = int(input("Enter round number: "))
-        except ValueError:
-            print("Invalid round number")
-            return False
-    else:
-        print("Invalid choice")
-        return False
-
-    message_data = {
-        'username': current_user,
-        'round_number': round_number
-    }
-    
-    message_str = create_message(MESSAGE_TYPES['REQUEST_MESSAGES'], message_data)
-    client_socket.send(message_str.encode())
-    
-    response = client_socket.recv(1024).decode()
-    response_type, response_data = parse_message(response)
-    
-    if response_type == 'SUCCESS':
-        messages = response_data.get('messages', [])
-        if not messages:
-            print(f"\nNo messages found for round {round_number}.")
-        else:
-            print(f"\nMessages from round {round_number}:")
+    if success:
+        messages = data.get("messages", [])
+        if messages:
+            print("\nYour messages:")
             for msg in messages:
-                try:
-                    # Decrypt and display each message
-                    decrypted_msg = decrypt_message(msg['content'], private_key)
-                    print(f"\nMessage ID: {msg['id']}")
-                    print(f"Timestamp: {msg['timestamp']}")
-                    print(f"Content: {decrypted_msg}")
-                    print("-" * 50)
-                except Exception as e:
-                    print(f"Error decrypting message: {str(e)}")
+                print(f"\nFrom: {msg.get('sender')}")
+                print(f"Content: {msg.get('content')}")
+                print(f"Time: {msg.get('timestamp')}")
+                if msg.get('is_flagged'):
+                    print("⚠️ This message has been flagged")
+                print("-" * 50)
+        else:
+            print("No messages found")
         return True
-    else:
-        print(f"Error retrieving messages: {response_data.get('error', 'Unknown error')}")
-        return False
-
-def encrypt_message(message, public_key):
-    # Implement encryption using the public key
-    # This is a placeholder - implement your encryption logic here
-    return base64.b64encode(message.encode()).decode()
+    return False
 
 def decrypt_message(encrypted_message, private_key):
     # Implement decryption using the private key
@@ -334,6 +305,166 @@ def decrypt_message(encrypted_message, private_key):
 def disconnect():
     # Tell the server you've disconnected, log out (automatic) 
     pass
+
+def admin_menu():
+    """Menu for admins"""
+    while True:
+        print("\nAdmin Menu:")
+        print("[1] Make a user a moderator")
+        print("[2] Exit")
+        
+        choice = input("Enter your choice: ")
+        
+        if choice == "1":
+            target_user = input("Username to make moderator: ")
+            make_moderator(target_user)
+        elif choice == "2":
+            print("Goodbye")
+            break
+        else:
+            print("Invalid choice")
+
+def moderator_menu():
+    """Menu for moderators"""
+    while True:
+        print("\nModerator Menu:")
+        print("[1] Send a message")
+        print("[2] Read messages")
+        print("[3] Flag a message")
+        print("[4] View flagged messages")
+        print("[5] Ban a user")
+        print("[6] Exit")
+        
+        choice = input("Enter your choice: ")
+        
+        if choice == "1":
+            recipient = input("Recipient username: ")
+            message = input("Message: ")
+            send_message(recipient, message)
+        elif choice == "2":
+            read_messages()
+        elif choice == "3":
+            message_id = input("Message ID to flag: ")
+            reason = input("Reason for flagging: ")
+            flag_message(message_id, reason)
+        elif choice == "4":
+            view_flagged_messages()
+        elif choice == "5":
+            target_user = input("Username to ban: ")
+            ban_user(target_user)
+        elif choice == "6":
+            print("Goodbye")
+            break
+        else:
+            print("Invalid choice")
+
+def ban_user(target_user):
+    """Ban a user (moderator only)"""
+    if not current_user or user_role != "moderator":
+        print("Only moderators can ban users")
+        return False
+        
+    success, data = send_request(BAN_USER, {
+        "moderator": current_user,
+        "target_user": target_user
+    })
+    
+    if success:
+        print(f"User {target_user} has been banned")
+        return True
+    return False
+
+def make_moderator(target_user):
+    """Make a user a moderator (admin only)"""
+    if not current_user or user_role != "admin":
+        print("Only admins can make moderators")
+        return False
+        
+    success, data = send_request(MAKE_MODERATOR, {
+        "admin": current_user,
+        "target_user": target_user
+    })
+    
+    if success:
+        print(f"User {target_user} is now a moderator")
+        return True
+    return False
+
+def view_flagged_messages():
+    """View flagged messages (moderator only)"""
+    if not current_user or user_role != "moderator":
+        print("Only moderators can view flagged messages")
+        return False
+        
+    success, data = send_request(GET_FLAGGED_MESSAGES, {
+        "username": current_user
+    })
+    
+    if success:
+        flagged_messages = data.get("flagged_messages", [])
+        if flagged_messages:
+            print("\nFlagged Messages:")
+            for msg in flagged_messages:
+                print(f"\nMessage ID: {msg.get('id')}")
+                print(f"From: {msg.get('sender')}")
+                print(f"Content: {msg.get('content')}")
+                print(f"Time: {msg.get('timestamp')}")
+                print(f"Flagged by: {msg.get('flag_data', {}).get('flagged_by')}")
+                print(f"Reason: {msg.get('flag_data', {}).get('reason')}")
+                print("-" * 50)
+        else:
+            print("No flagged messages found")
+        return True
+    return False
+
+def view_audit_log():
+    """View audit log (moderator only)"""
+    request_data = {
+        'type': 'view_audit_log',
+        'username': current_user
+    }
+    
+    response = send_request("LOGIN", request_data)
+    if 'error' in response:
+        print(f"Error: {response['error']}")
+        return False
+        
+    log_entries = response.get('log', [])
+    if not log_entries:
+        print("No audit log entries found")
+        return True
+        
+    print("\nAudit Log:")
+    for entry in log_entries:
+        print(f"\nTimestamp: {entry.get('timestamp')}")
+        print(f"Action: {entry.get('action')}")
+        print(f"User: {entry.get('username')}")
+        print(f"Role: {entry.get('role')}")
+        print(f"Round: {entry.get('round')}")
+        print("-" * 50)
+    return True
+
+def view_all_users():
+    """View all users in the system (admin only)"""
+    request_data = {
+        'type': 'view_all_users',
+        'username': current_user
+    }
+    
+    response = send_request("LOGIN", request_data)
+    if 'error' in response:
+        print(f"Error: {response['error']}")
+        return False
+        
+    users = response.get('users', {})
+    if not users:
+        print("No users found")
+        return True
+        
+    print("\nSystem Users:")
+    for username, role in users.items():
+        print(f"{username}: {role}")
+    return True
 
 if __name__ == "__main__":
     main()
