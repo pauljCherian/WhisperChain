@@ -3,7 +3,7 @@ import base64
 import socket
 from message_types import (
     LOGIN, SEND_MESSAGE, REQUEST_MESSAGES, FLAG_MESSAGE,
-    GET_FLAGGED_MESSAGES, BAN_USER, MAKE_MODERATOR,
+    GET_FLAGGED_MESSAGES, BAN_TOKEN, GET_TOKEN, NEXT_ROUND,
     SUCCESS, ERROR, create_message, parse_message
 )
 from cryptography.hazmat.primitives import padding, hashes
@@ -13,10 +13,12 @@ from cryptography.hazmat.primitives import serialization
 
 # Global variables
 current_user = None
-current_round = 1
+user_role = None
 client_socket = None
+current_round_token = None
+current_anonymous_id = None
+current_round = 1
 private_key = None
-user_role = None  # Store the current user's role
 
 # helper functions
 def write_json(filename, data):
@@ -48,7 +50,7 @@ def load_user_role(username):
 
 def login(username, password):
     """Login to the system"""
-    global current_user, user_role
+    global current_user, user_role, current_anonymous_id
     
     success, data = send_request(LOGIN, {
         "username": username,
@@ -58,7 +60,11 @@ def login(username, password):
     if success:
         current_user = username
         user_role = data.get("role")
+        current_anonymous_id = data.get("anonymous_id")
         print(f"Login successful! Role: {user_role}")
+        print(f"Your anonymous ID: {current_anonymous_id}")
+        # Get token for current round
+        get_round_token()
         return True
     return False
 
@@ -195,18 +201,27 @@ def get_public_key(username):
 
 def send_message(recipient, content):
     """Send a message to another user"""
+    global current_round_token
+    
     if not current_user:
         print("Not logged in")
         return False
         
+    if not current_round_token:
+        print("No round token available. Getting new token...")
+        if not get_round_token():
+            return False
+        
     success, data = send_request(SEND_MESSAGE, {
         "sender": current_user,
         "recipient": recipient,
-        "content": content
+        "content": content,
+        "token": current_round_token
     })
     
     if success:
         print("Message sent successfully")
+        current_round_token = None  # Token used, clear it
         return True
     return False
 
@@ -287,8 +302,10 @@ def read_messages():
             print("\nYour messages:")
             for msg in messages:
                 print(f"\nFrom: {msg.get('sender')}")
+                print(f"Anonymous ID: {msg.get('sender_anonymous_id')}")
                 print(f"Content: {msg.get('content')}")
                 print(f"Time: {msg.get('timestamp')}")
+                print(f"Round: {msg.get('round')}")
                 if msg.get('is_flagged'):
                     print("⚠️ This message has been flagged")
                 print("-" * 50)
@@ -310,14 +327,13 @@ def admin_menu():
     """Menu for admins"""
     while True:
         print("\nAdmin Menu:")
-        print("[1] Make a user a moderator")
+        print("[1] Start new round")
         print("[2] Exit")
         
         choice = input("Enter your choice: ")
         
         if choice == "1":
-            target_user = input("Username to make moderator: ")
-            make_moderator(target_user)
+            start_new_round()
         elif choice == "2":
             print("Goodbye")
             break
@@ -332,7 +348,7 @@ def moderator_menu():
         print("[2] Read messages")
         print("[3] Flag a message")
         print("[4] View flagged messages")
-        print("[5] Ban a user")
+        print("[5] Ban a token")
         print("[6] Exit")
         
         choice = input("Enter your choice: ")
@@ -350,43 +366,42 @@ def moderator_menu():
         elif choice == "4":
             view_flagged_messages()
         elif choice == "5":
-            target_user = input("Username to ban: ")
-            ban_user(target_user)
+            token = input("Token to ban: ")
+            ban_token(token)
         elif choice == "6":
             print("Goodbye")
             break
         else:
             print("Invalid choice")
 
-def ban_user(target_user):
-    """Ban a user (moderator only)"""
+def ban_token(token):
+    """Ban a token (moderator only)"""
     if not current_user or user_role != "moderator":
-        print("Only moderators can ban users")
+        print("Only moderators can ban tokens")
         return False
         
-    success, data = send_request(BAN_USER, {
+    success, data = send_request(BAN_TOKEN, {
         "moderator": current_user,
-        "target_user": target_user
+        "token": token
     })
     
     if success:
-        print(f"User {target_user} has been banned")
+        print("Token banned successfully")
         return True
     return False
 
-def make_moderator(target_user):
-    """Make a user a moderator (admin only)"""
+def start_new_round():
+    """Start a new round (admin only)"""
     if not current_user or user_role != "admin":
-        print("Only admins can make moderators")
+        print("Only admins can start new rounds")
         return False
         
-    success, data = send_request(MAKE_MODERATOR, {
-        "admin": current_user,
-        "target_user": target_user
+    success, data = send_request(NEXT_ROUND, {
+        "username": current_user
     })
     
     if success:
-        print(f"User {target_user} is now a moderator")
+        print(f"Round {data.get('round')} started")
         return True
     return False
 
@@ -407,8 +422,11 @@ def view_flagged_messages():
             for msg in flagged_messages:
                 print(f"\nMessage ID: {msg.get('id')}")
                 print(f"From: {msg.get('sender')}")
+                print(f"Anonymous ID: {msg.get('sender_anonymous_id')}")
                 print(f"Content: {msg.get('content')}")
                 print(f"Time: {msg.get('timestamp')}")
+                print(f"Round: {msg.get('round')}")
+                print(f"Round Token: {msg.get('round_token')}")
                 print(f"Flagged by: {msg.get('flag_data', {}).get('flagged_by')}")
                 print(f"Reason: {msg.get('flag_data', {}).get('reason')}")
                 print("-" * 50)
@@ -465,6 +483,21 @@ def view_all_users():
     for username, role in users.items():
         print(f"{username}: {role}")
     return True
+
+def get_round_token():
+    """Get a round token for the current round"""
+    global current_round_token, current_round
+    
+    success, data = send_request(GET_TOKEN, {
+        "username": current_user
+    })
+    
+    if success:
+        current_round_token = data.get("token")
+        current_round = data.get("round")
+        print(f"Got round token for round {current_round}")
+        return True
+    return False
 
 if __name__ == "__main__":
     main()

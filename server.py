@@ -2,8 +2,18 @@ import socket
 import threading
 import json
 import time
+import random
+import string
 from datetime import datetime
 from message_types import create_message, parse_message
+
+def generate_token():
+    """Generate a random token"""
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
+def generate_anonymous_id():
+    """Generate a random anonymous ID"""
+    return f"anon_{''.join(random.choices(string.ascii_letters + string.digits, k=6))}"
 
 # Load data from JSON file
 def load_data():
@@ -14,6 +24,10 @@ def load_data():
         print("data.json not found, creating new data structure")
         return {
             "users": {},
+            "current_round": 1,
+            "round_tokens": {},
+            "used_tokens": [],
+            "banned_tokens": [],
             "messages": {},
             "flagged_messages": {}
         }
@@ -70,17 +84,56 @@ def handle_client(conn, address):
                 print("=====================\n")
                 
                 if username in data["users"] and data["users"][username]["password"] == password:
+                    # Generate anonymous ID if user doesn't have one
+                    if "anonymous_id" not in data["users"][username]:
+                        data["users"][username]["anonymous_id"] = generate_anonymous_id()
+                        save_data(data)
+                    
                     response = create_message("SUCCESS", {
                         "message": "Login successful",
-                        "role": data["users"][username]["role"]
+                        "role": data["users"][username]["role"],
+                        "anonymous_id": data["users"][username]["anonymous_id"]
                     })
                 else:
                     response = create_message("ERROR", {"error": "Invalid username or password"})
+                    
+            elif message_type == "GET_TOKEN":
+                username = message_data.get("username")
+                current_round = str(data["current_round"])
+                
+                if username in data["users"]:
+                    # Initialize round if it doesn't exist
+                    if current_round not in data["round_tokens"]:
+                        data["round_tokens"][current_round] = {}
+                    
+                    # Generate new token if user doesn't have one for this round
+                    if username not in data["round_tokens"][current_round]:
+                        # Generate a new token that hasn't been used
+                        while True:
+                            new_token = generate_token()
+                            if new_token not in data["used_tokens"] and new_token not in data["banned_tokens"]:
+                                data["round_tokens"][current_round][username] = new_token
+                                break
+                        save_data(data)
+                    
+                    # Check if the user's token for this round has been used
+                    user_token = data["round_tokens"][current_round][username]
+                    if user_token in data["used_tokens"]:
+                        response = create_message("ERROR", {"error": "You have already used your token for this round"})
+                    else:
+                        response = create_message("SUCCESS", {
+                            "token": user_token,
+                            "round": data["current_round"]
+                        })
+                else:
+                    response = create_message("ERROR", {"error": "User not found"})
                     
             elif message_type == "SEND_MESSAGE":
                 sender = message_data.get("sender")
                 recipient = message_data.get("recipient")
                 content = message_data.get("content")
+                round_token = message_data.get("token")
+                current_round = str(data["current_round"])
                 
                 # Check if sender is admin (admins can't send messages)
                 if data["users"][sender]["role"] == "admin":
@@ -88,7 +141,16 @@ def handle_client(conn, address):
                 # Check if sender is banned
                 elif data["users"][sender].get("is_banned", False):
                     response = create_message("ERROR", {"error": "You are banned from sending messages"})
-                elif all([sender, recipient, content]):
+                # Check if token is valid
+                elif round_token not in data["round_tokens"][current_round].values():
+                    response = create_message("ERROR", {"error": "Invalid token"})
+                # Check if token is banned
+                elif round_token in data["banned_tokens"]:
+                    response = create_message("ERROR", {"error": "This token has been banned"})
+                # Check if token has already been used
+                elif round_token in data["used_tokens"]:
+                    response = create_message("ERROR", {"error": "This token has already been used"})
+                elif all([sender, recipient, content, round_token]):
                     if recipient not in data["messages"]:
                         data["messages"][recipient] = []
                     
@@ -96,10 +158,15 @@ def handle_client(conn, address):
                     data["messages"][recipient].append({
                         "id": message_id,
                         "sender": sender,
+                        "sender_anonymous_id": data["users"][sender]["anonymous_id"],
                         "content": content,
                         "timestamp": datetime.now().isoformat(),
-                        "is_flagged": False
+                        "is_flagged": False,
+                        "round": data["current_round"],
+                        "round_token": round_token
                     })
+                    # Mark token as used
+                    data["used_tokens"].append(round_token)
                     save_data(data)
                     response = create_message("SUCCESS", {"message": "Message sent"})
                 else:
@@ -130,7 +197,8 @@ def handle_client(conn, address):
                                 data["flagged_messages"][message_id] = {
                                     "flagged_by": username,
                                     "reason": reason,
-                                    "timestamp": datetime.now().isoformat()
+                                    "timestamp": datetime.now().isoformat(),
+                                    "sender_anonymous_id": msg["sender_anonymous_id"]
                                 }
                                 save_data(data)
                                 response = create_message("SUCCESS", {"message": "Message flagged"})
@@ -165,31 +233,39 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Unauthorized"})
                     
-            elif message_type == "BAN_USER":
+            elif message_type == "BAN_TOKEN":
                 moderator = message_data.get("moderator")
-                target_user = message_data.get("target_user")
+                token = message_data.get("token")
                 
-                if (moderator and target_user and 
-                    data["users"][moderator]["role"] == "moderator" and
-                    data["users"][target_user]["role"] == "user"):
-                    data["users"][target_user]["is_banned"] = True
-                    save_data(data)
-                    response = create_message("SUCCESS", {"message": f"User {target_user} has been banned"})
+                if moderator and token and data["users"][moderator]["role"] == "moderator":
+                    if token not in data["banned_tokens"]:
+                        data["banned_tokens"].append(token)
+                        save_data(data)
+                        response = create_message("SUCCESS", {"message": "Token banned successfully"})
+                    else:
+                        response = create_message("ERROR", {"error": "Token already banned"})
                 else:
-                    response = create_message("ERROR", {"error": "Unauthorized or invalid user"})
+                    response = create_message("ERROR", {"error": "Unauthorized or invalid token"})
                     
-            elif message_type == "MAKE_MODERATOR":
-                admin = message_data.get("admin")
-                target_user = message_data.get("target_user")
+            elif message_type == "NEXT_ROUND":
+                username = message_data.get("username")
                 
-                if (admin and target_user and 
-                    data["users"][admin]["role"] == "admin" and
-                    data["users"][target_user]["role"] == "user"):
-                    data["users"][target_user]["role"] = "moderator"
+                if username and data["users"][username]["role"] == "admin":
+                    data["current_round"] += 1
+                    data["round_tokens"][str(data["current_round"])] = {}
+                    # Clear all messages for the new round
+                    data["messages"] = {}
+                    # Clear flagged messages as well
+                    data["flagged_messages"] = {}
+                    # Clear used tokens for the new round
+                    data["used_tokens"] = []
                     save_data(data)
-                    response = create_message("SUCCESS", {"message": f"User {target_user} is now a moderator"})
+                    response = create_message("SUCCESS", {
+                        "message": f"Round {data['current_round']} started",
+                        "round": data["current_round"]
+                    })
                 else:
-                    response = create_message("ERROR", {"error": "Unauthorized or invalid user"})
+                    response = create_message("ERROR", {"error": "Unauthorized"})
                     
             else:
                 print(f"Unknown message type: {message_type}")
