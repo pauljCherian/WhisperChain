@@ -101,7 +101,8 @@ def create_account(username, password):
     # Send public key to server
     # Sever calls store_public_key()
     # Hash & store private key
-    # Automatically login 
+    # Automatically login
+
 
 def login(username, password): 
     # Hash & salt the password

@@ -1,6 +1,7 @@
 import socket
 import threading
 import json
+import datetime
 import hashlib 
 import os 
 import base64
@@ -13,6 +14,14 @@ from message_types import MESSAGE_TYPES, parse_message, create_message
 # Global variables for round management
 current_round = 1
 inboxes = {}  # Dictionary to store all user inboxes
+#keeps track of the roles of each person
+roles = {}
+
+#initialize audit_log
+
+audit_log = []
+
+
 
 
 # from crypto_utils import *
@@ -37,7 +46,19 @@ def validate_login(username, hashed_password_try):
         return True 
     else: 
         return False 
-    
+
+def log_action(action, token, role, current_round):
+    event = {
+        "time": datetime.datetime.utcnow().isoformat(),
+        "action": action,
+        "role": role,
+        "user_session_token": token,
+        "current_round": current_round
+    }
+    audit_log.append(event)
+
+    with open("audit_logs.json", "w") as file:
+        json.dump(audit_log, file)
 # Get the public key for a registered user
 def get_public_key(username): 
     public_key = None
@@ -49,6 +70,15 @@ def get_public_key(username):
     public_key = data.get(username)
 
     return public_key
+
+#for the admin to assign roles
+def assign_role(admin, user, assigned_role):
+    if roles.get(admin) != "Admin":
+        print(f"{admin} is not the actual admin and cannot assign roles.")
+        return
+
+    roles[user] = assigned_role
+    print(f"{user} is now assigned the role of {assigned_role}")
 
 def handle_request(request_data):
     """ 
@@ -172,18 +202,20 @@ def get_current_round():
     return current_round
 
 def send_message(sender, recipient, ciphertext):
-    global active_tokens
+    global active_tokens, current_round
     token = active_tokens.get(sender)
 
+    #maybe want to add some type of check for the role, like if role isn't sender then we say they cant send message
     if not token: #meaning its null or None or something so there's no token for the sender
         print(f"{sender} does not have any remaining tokens for this round")
         return
     #get message and puts it in the inbox of the recipient
-
+    message_id = store_message(recipient, ciphertext, current_round)
 
     active_tokens[sender] = None #revokes tokens from the sender
     print(f"{sender} has sent a message to {recipient}. Now {sender} has no remaining tokens.")
-    return
+    log_action("user sent a message", active_tokens[sender], "Sender", current_round)
+    return message_id
 
 
 
