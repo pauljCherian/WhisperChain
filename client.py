@@ -186,12 +186,14 @@ def read_messages():
     if not current_user:
         print("Error: Not logged in")
         return False
+ 
+
 
     # Ask user which round to retrieve messages from
     print("\nAvailable rounds:")
     print("[1] Current round")
     print("[2] Previous round")
-    print("[3] Enter specific round number")
+    print("[3] Enter specific round number: ")
     
     choice = input("Enter your choice (1-3): ")
     
