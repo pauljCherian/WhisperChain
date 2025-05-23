@@ -12,10 +12,14 @@ class MessagingApp(tk.Tk):
         super().__init__()
         self.title("Messaging Client")
         self.geometry("500x400")
-        self.create_widgets()
         self.current_user = None
+        
+        # Hide the main window initially
+        self.withdraw()
+        
+        # Show login dialog first
         self.show_login_dialog()
-
+        
     def create_widgets(self):
         # Main action buttons
         self.btn_frame = tk.Frame(self)
@@ -106,8 +110,11 @@ class MessagingApp(tk.Tk):
             # For now, just accept any input as successful
             if username and password:
                 self.current_user = username  # Store for later use
-                self.display_output(f"Logged in as {username}")
                 login_dialog.destroy()
+                # Create widgets and show main window after successful login
+                self.create_widgets()
+                self.deiconify()  # Show the main window
+                self.display_output(f"Logged in as {username}")
                 self.enable_main_buttons()
             else:
                 messagebox.showerror("Login Failed", "Please enter both username and password.")
