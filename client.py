@@ -316,6 +316,8 @@ def review_message(message_id, action):
                 "moderator": current_user,
                 "token": current_round_token
             })
+            # remove the message from the queue
+            moderator_queue.remove(message_id)
         else:
             print(f"Message {action}ed successfully!")
         # Update local queue
