@@ -331,6 +331,7 @@ def encrypt_message(message, public_key):
 def read_messages():
     """Read messages for the current user"""
     if not current_user:
+
         print("Not logged in")
         return False
         
