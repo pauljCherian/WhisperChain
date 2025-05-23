@@ -33,7 +33,8 @@ def load_data():
             "used_tokens": [],
             "banned_tokens": [],
             "messages": {},
-            "flagged_messages": {}
+            "flagged_messages": {},
+            "encrypted_inboxes": {}  # New field for encrypted user inboxes
         }
 
 # Save data to JSON file
@@ -118,7 +119,7 @@ def handle_client(conn, address):
                         "role": data["users"][username]["role"],
                         "anonymous_id": data["users"][username]["anonymous_id"]
                     })
-                else:
+    else: 
                     response = create_message("ERROR", {"error": "Invalid username or password"})
                     
             elif message_type == MESSAGE_TYPES["GET_TOKEN"]:
@@ -175,11 +176,16 @@ def handle_client(conn, address):
                 elif round_token in data["used_tokens"]:
                     response = create_message("ERROR", {"error": "This token has already been used"})
                 elif all([sender, recipient, content, round_token]):
-                    if recipient not in data["messages"]:
-                        data["messages"][recipient] = []
+                    # Initialize recipient's inbox if it doesn't exist
+                    if recipient not in data["encrypted_inboxes"]:
+                        data["encrypted_inboxes"][recipient] = {}
+                    
+                    # Initialize round in recipient's inbox if it doesn't exist
+                    if current_round not in data["encrypted_inboxes"][recipient]:
+                        data["encrypted_inboxes"][recipient][current_round] = []
                     
                     message_id = f"msg{int(time.time())}"
-                    data["messages"][recipient].append({
+                    message_data = {
                         "id": message_id,
                         "sender": sender,
                         "sender_anonymous_id": data["users"][sender]["anonymous_id"],
@@ -188,7 +194,11 @@ def handle_client(conn, address):
                         "is_flagged": False,
                         "round": data["current_round"],
                         "round_token": round_token
-                    })
+                    }
+                    
+                    # Add message to recipient's encrypted inbox
+                    data["encrypted_inboxes"][recipient][current_round].append(message_data)
+                    
                     # Mark token as used
                     data["used_tokens"].append(round_token)
                     save_data(data)
@@ -199,14 +209,18 @@ def handle_client(conn, address):
             elif message_type == MESSAGE_TYPES["REQUEST_MESSAGES"]:
                 username = message_data.get("username")
                 round_number = message_data.get("round_number")
+                
                 if username and round_number:
-                    messages = data["messages"].get(username, [])
+                    # Get messages from user's encrypted inbox for the specified round
+                    user_inbox = data["encrypted_inboxes"].get(username, {})
+                    round_messages = user_inbox.get(str(round_number), [])
+                    
                     response = create_message("SUCCESS", {
-                        "messages": messages,
+                        "messages": round_messages,
                         "round_number": round_number
                     })
                 else:
-                    response = create_message("ERROR", {"error": "Missing username"})
+                    response = create_message("ERROR", {"error": "Missing username or round number"})
                     
             elif message_type == MESSAGE_TYPES["FLAG_MESSAGE"]:
                 username = message_data.get("username")
@@ -279,11 +293,13 @@ def handle_client(conn, address):
                     data["current_round"] += 1
                     data["round_tokens"][str(data["current_round"])] = {}
                     # Clear all messages for the new round
-                    data["messages"] = {}
+                    #data["messages"] = {}
                     # Clear flagged messages as well
-                    data["flagged_messages"] = {}
+                    #data["flagged_messages"] = {}
                     # Clear used tokens for the new round
                     data["used_tokens"] = []
+                    # Don't clear encrypted inboxes - they persist across rounds
+                    
                     save_data(data)
                     response = create_message("SUCCESS", {
                         "message": f"Round {data['current_round']} started",
@@ -417,7 +433,7 @@ def main():
     port = 5001
     
     server_socket = socket.socket()
-    server_socket.bind((host, port))
+    server_socket.bind((host, port)) 
     server_socket.listen(5)
     
     print(f"Server started on {host}:{port}")

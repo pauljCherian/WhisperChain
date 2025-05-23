@@ -354,15 +354,21 @@ def read_messages():
 
         print("Not logged in")
         return False
-        
+    
+    # Ask user which round they want to view
+    round_number = input("Enter round number to view messages (or press Enter for current round): ")
+    if not round_number:
+        round_number = current_round
+    
     success, data = send_request(REQUEST_MESSAGES, {
-        "username": current_user
+        "username": current_user,
+        "round_number": round_number
     })
     
     if success:
         messages = data.get("messages", [])
         if messages:
-            print("\nYour messages:")
+            print(f"\nYour messages for round {round_number}:")
             for msg in messages:
                 print(f"\nFrom: {msg.get('sender')}")
                 print(f"Anonymous ID: {msg.get('sender_anonymous_id')}")
@@ -373,7 +379,7 @@ def read_messages():
                     print("This message has been flagged")
                 print("-" * 50)
         else:
-            print("No messages found")
+            print(f"No messages found for round {round_number}")
         return True
     return False
 
