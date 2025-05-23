@@ -306,7 +306,18 @@ def review_message(message_id, action):
     response_type, response_data = parse_message(response)
     
     if response_type == 'SUCCESS':
-        print(f"Message {action}ed successfully!")
+        if action == "approve":
+            print("Message marked as fine, no action taken")
+            # moderator finds the message as fine, remove from the queue 
+            moderator_queue.remove(message_id)
+        elif action == "reject":
+            print("Sender has been banned")
+            send_request(BAN_TOKEN, {
+                "moderator": current_user,
+                "token": current_round_token
+            })
+        else:
+            print(f"Message {action}ed successfully!")
         # Update local queue
         get_moderator_queue()
         return True

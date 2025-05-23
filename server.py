@@ -347,18 +347,49 @@ def handle_client(conn, address):
                 action = message_data.get("action")
                 moderator = message_data.get("moderator")
                 
-                if all([message_id, action, moderator]) and action in ["approve", "reject"]:
-                    # Remove message from moderator's queue
-                    queue = get_moderator_queue(moderator)
-                    for i, msg in enumerate(queue):
-                        if msg["message_id"] == message_id:
-                            queue.pop(i)
+                if all([message_id, action, moderator]) and action in ["approve", "reject", "ignore", "ban_sender"]:
+                    # Find the message in all users' messages
+                    message_found = False
+                    sender = None
+                    for username, messages in data["messages"].items():
+                        for msg in messages:
+                            if msg["id"] == message_id:
+                                message_found = True
+                                sender = msg["sender"]
+                                if action == "ban_sender":
+                                    # Ban the sender
+                                    data["users"][sender]["is_banned"] = True
+                                    save_data(data)
+                                break
+                        if message_found:
                             break
                     
-                    response = create_message("SUCCESS", {
-                        "status": f"Message {action}ed by {moderator}",
-                        "message_id": message_id
-                    })
+                    if message_found:
+                        # Remove message from moderator's queue
+                        queue = get_moderator_queue(moderator)
+                        for i, msg in enumerate(queue):
+                            if msg["message_id"] == message_id:
+                                queue.pop(i)
+                                break
+                        
+                        if action == "ignore":
+                            response = create_message("SUCCESS", {
+                                "status": f"Message marked as fine by {moderator}",
+                                "message_id": message_id
+                            })
+                        elif action == "ban_sender":
+                            response = create_message("SUCCESS", {
+                                "status": f"Message sender banned by {moderator}",
+                                "message_id": message_id,
+                                "banned_user": sender
+                            })
+                        else:
+                            response = create_message("SUCCESS", {
+                                "status": f"Message {action}ed by {moderator}",
+                                "message_id": message_id
+                            })
+                    else:
+                        response = create_message("ERROR", {"error": "Message not found"})
                 else:
                     response = create_message("ERROR", {"error": "Invalid review action or missing fields"})
 
