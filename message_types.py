@@ -13,6 +13,9 @@ BAN_TOKEN = "BAN_TOKEN"
 NEXT_ROUND = "NEXT_ROUND"
 SUCCESS = "SUCCESS"
 ERROR = "ERROR"
+REVIEW_MESSAGE = "REVIEW_MESSAGE"
+MODERATOR_FLAG = "MODERATOR_FLAG"
+MODERATOR_QUEUE = "MODERATOR_QUEUE"
 
 MESSAGE_TYPES = {
     "LOGIN": LOGIN,
@@ -26,7 +29,10 @@ MESSAGE_TYPES = {
     "BAN_TOKEN": BAN_TOKEN,
     "NEXT_ROUND": NEXT_ROUND,
     "SUCCESS": SUCCESS,
-    "ERROR": ERROR
+    "ERROR": ERROR,
+    "REVIEW_MESSAGE": REVIEW_MESSAGE,
+    "MODERATOR_FLAG": MODERATOR_FLAG,
+    "MODERATOR_QUEUE": MODERATOR_QUEUE
 }
 
 def create_message(message_type, data):
@@ -52,4 +58,6 @@ def parse_message(message_str):
 # SEND_MESSAGE: {'sender': 'username', 'recipient': 'username', 'content': 'encrypted_message'}
 # FLAG_MESSAGE: {'message_id': 'id', 'reason': 'reason_for_flag'}
 # REVIEW_MESSAGE: {'message_id': 'id', 'action': 'approve/reject'}
-# REQUEST_MESSAGES: {'username': 'username', 'round_number': 'round_number'} 
+# REQUEST_MESSAGES: {'username': 'username', 'round_number': 'round_number'}
+# MODERATOR_FLAG: {'message_id': 'id', 'reason': 'reason_for_flag', 'moderator': 'moderator_name'}
+# MODERATOR_QUEUE: {'moderator': 'moderator_name', 'messages': [list of flagged messages]} 

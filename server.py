@@ -6,6 +6,11 @@ import random
 import string
 from datetime import datetime
 from message_types import create_message, parse_message
+import hashlib 
+import os 
+import base64
+import uuid
+from crypto_utils import *
 
 def generate_token():
     """Generate a random token"""
@@ -39,6 +44,26 @@ def save_data(data):
 
 # Global data
 data = load_data()
+
+# Global variables for round management
+current_round = 1
+inboxes = {}  # Dictionary to store all user inboxes
+moderator_queues = {}  # Dictionary to store moderator message queues
+
+def initialize_moderator_queue(moderator_name):
+    """Initialize a queue for a new moderator"""
+    if moderator_name not in moderator_queues:
+        moderator_queues[moderator_name] = []
+
+def add_to_moderator_queue(moderator_name, message_data):
+    """Add a flagged message to a moderator's queue"""
+    initialize_moderator_queue(moderator_name)
+    moderator_queues[moderator_name].append(message_data)
+
+def get_moderator_queue(moderator_name):
+    """Get all messages in a moderator's queue"""
+    initialize_moderator_queue(moderator_name)
+    return moderator_queues[moderator_name]
 
 def handle_client(conn, address):
     """Handle client connection"""
@@ -267,6 +292,76 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Unauthorized"})
                     
+            elif message_type == "MODERATOR_FLAG":
+                message_id = message_data.get("message_id")
+                reason = message_data.get("reason")
+                moderator = message_data.get("moderator")
+                
+                if all([message_id, reason, moderator]):
+                    # Find the message in all inboxes
+                    message_found = False
+                    for username, inbox in inboxes.items():
+                        for round_num, messages in inbox.items():
+                            for msg in messages:
+                                if msg['id'] == message_id:
+                                    # Add to moderator's queue
+                                    flagged_message = {
+                                        'message_id': message_id,
+                                        'reason': reason,
+                                        'content': msg['content'],
+                                        'sender': username,
+                                        'round_number': round_num,
+                                        'timestamp': str(uuid.uuid1())
+                                    }
+                                    add_to_moderator_queue(moderator, flagged_message)
+                                    message_found = True
+                                    break
+                            if message_found:
+                                break
+                        if message_found:
+                            break
+                    
+                    if message_found:
+                        response = create_message('SUCCESS', {
+                            'status': 'Message added to moderator queue',
+                            'moderator': moderator
+                        })
+                    else:
+                        response = create_message('ERROR', {'error': 'Message not found'})
+                else:
+                    response = create_message('ERROR', {'error': 'Missing required fields'})
+
+            elif message_type == "MODERATOR_QUEUE":
+                moderator = message_data.get('moderator')
+                if moderator:
+                    queue = get_moderator_queue(moderator)
+                    response = create_message('SUCCESS', {
+                        'messages': queue,
+                        'moderator': moderator
+                    })
+                else:
+                    response = create_message('ERROR', {'error': 'Missing moderator name'})
+
+            elif message_type == "REVIEW_MESSAGE":
+                message_id = message_data.get('message_id')
+                action = message_data.get('action')
+                moderator = message_data.get('moderator')
+                
+                if all([message_id, action, moderator]) and action in ['approve', 'reject']:
+                    # Remove message from moderator's queue
+                    queue = get_moderator_queue(moderator)
+                    for i, msg in enumerate(queue):
+                        if msg['message_id'] == message_id:
+                            queue.pop(i)
+                            break
+                    
+                    response = create_message('SUCCESS', {
+                        'status': f'Message {action}ed by {moderator}',
+                        'message_id': message_id
+                    })
+                else:
+                    response = create_message('ERROR', {'error': 'Invalid review action or missing fields'})
+
             else:
                 print(f"Unknown message type: {message_type}")
                 response = create_message("ERROR", {"error": f"Unknown message type: {message_type}"})

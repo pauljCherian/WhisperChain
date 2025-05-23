@@ -4,7 +4,7 @@ import socket
 from message_types import (
     LOGIN, SEND_MESSAGE, REQUEST_MESSAGES, FLAG_MESSAGE,
     GET_FLAGGED_MESSAGES, BAN_TOKEN, GET_TOKEN, NEXT_ROUND,
-    SUCCESS, ERROR, create_message, parse_message
+    SUCCESS, ERROR, create_message, parse_message, MESSAGE_TYPES
 )
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -19,6 +19,8 @@ current_round_token = None
 current_anonymous_id = None
 current_round = 1
 private_key = None
+is_moderator = False
+moderator_queue = []  # Local queue for moderator messages
 
 # helper functions
 def write_json(filename, data):
@@ -226,33 +228,71 @@ def send_message(recipient, content):
     return False
 
 def flag_message(message_id, reason):
-    """Flag a message for review"""
-    if not current_user:
-        print("Not logged in")
+    """Flag a message for moderator review"""
+    if not is_moderator:
+        print("Error: Only moderators can flag messages")
         return False
-        
-    success, data = send_request(FLAG_MESSAGE, {
-        "username": current_user,
-        "message_id": message_id,
-        "reason": reason
-    })
+
+    message_data = {
+        'message_id': message_id,
+        'reason': reason,
+        'moderator': current_user
+    }
     
-    if success:
-        print("Message flagged successfully")
+    message_str = create_message(MESSAGE_TYPES['MODERATOR_FLAG'], message_data)
+    client_socket.send(message_str.encode())
+    
+    response = client_socket.recv(1024).decode()
+    response_type, response_data = parse_message(response)
+    
+    if response_type == 'SUCCESS':
+        print("Message flagged successfully!")
         return True
-    return False
+    else:
+        print(f"Error flagging message: {response_data.get('error', 'Unknown error')}")
+        return False
+
+def get_moderator_queue():
+    """Get the current moderator's queue from the server"""
+    if not is_moderator:
+        print("Error: Only moderators can access the queue")
+        return False
+
+    message_data = {
+        'moderator': current_user
+    }
+    
+    message_str = create_message(MESSAGE_TYPES['MODERATOR_QUEUE'], message_data)
+    client_socket.send(message_str.encode())
+    
+    response = client_socket.recv(1024).decode()
+    response_type, response_data = parse_message(response)
+    
+    if response_type == 'SUCCESS':
+        global moderator_queue
+        moderator_queue = response_data.get('messages', [])
+        return True
+    else:
+        print(f"Error retrieving moderator queue: {response_data.get('error', 'Unknown error')}")
+        return False
 
 def review_message(message_id, action):
+    """Review a flagged message (approve/reject)"""
+    if not is_moderator:
+        print("Error: Only moderators can review messages")
+        return False
+
     if action not in ['approve', 'reject']:
         print("Invalid action. Must be 'approve' or 'reject'")
         return False
         
     message_data = {
         'message_id': message_id,
-        'action': action
+        'action': action,
+        'moderator': current_user
     }
     
-    message_str = create_message(REVIEW_MESSAGE, message_data)
+    message_str = create_message(MESSAGE_TYPES['REVIEW_MESSAGE'], message_data)
     client_socket.send(message_str.encode())
     
     response = client_socket.recv(1024).decode()
@@ -260,6 +300,8 @@ def review_message(message_id, action):
     
     if response_type == 'SUCCESS':
         print(f"Message {action}ed successfully!")
+        # Update local queue
+        get_moderator_queue()
         return True
     else:
         print(f"Error reviewing message: {response_data.get('error', 'Unknown error')}")
@@ -341,36 +383,41 @@ def admin_menu():
             print("Invalid choice")
 
 def moderator_menu():
-    """Menu for moderators"""
+    """Menu for moderator actions"""
     while True:
         print("\nModerator Menu:")
-        print("[1] Send a message")
-        print("[2] Read messages")
-        print("[3] Flag a message")
-        print("[4] View flagged messages")
-        print("[5] Ban a token")
-        print("[6] Exit")
+        print("[1] View flagged messages")
+        print("[2] Review a message")
+        print("[3] Return to main menu")
         
-        choice = input("Enter your choice: ")
+        choice = input("Enter your choice (1-3): ")
         
         if choice == "1":
-            recipient = input("Recipient username: ")
-            message = input("Message: ")
-            send_message(recipient, message)
+            if get_moderator_queue():
+                if not moderator_queue:
+                    print("No flagged messages in queue")
+                else:
+                    print("\nFlagged Messages:")
+                    for msg in moderator_queue:
+                        print(f"\nMessage ID: {msg['message_id']}")
+                        print(f"From: {msg['sender']}")
+                        print(f"Round: {msg['round_number']}")
+                        print(f"Reason: {msg['reason']}")
+                        print(f"Timestamp: {msg['timestamp']}")
+                        print("-" * 50)
+        
         elif choice == "2":
-            read_messages()
+            if not moderator_queue:
+                print("No messages to review")
+                continue
+                
+            message_id = input("Enter message ID to review: ")
+            action = input("Enter action (approve/reject): ").lower()
+            review_message(message_id, action)
+        
         elif choice == "3":
-            message_id = input("Message ID to flag: ")
-            reason = input("Reason for flagging: ")
-            flag_message(message_id, reason)
-        elif choice == "4":
-            view_flagged_messages()
-        elif choice == "5":
-            token = input("Token to ban: ")
-            ban_token(token)
-        elif choice == "6":
-            print("Goodbye")
             break
+        
         else:
             print("Invalid choice")
 
