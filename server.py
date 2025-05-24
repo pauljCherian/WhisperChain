@@ -5,12 +5,12 @@ import time
 import random
 import string
 from datetime import datetime
-from message_types import create_message, parse_message
+from message_types import MESSAGE_TYPES, parse_message, create_message
 import hashlib 
 import os 
 import base64
 import uuid
-# from crypto_utils import *
+
 
 def generate_token():
     """Generate a random token"""
@@ -97,7 +97,7 @@ def handle_client(conn, address):
                 continue
             
             # Handle message based on type
-            if message_type == "LOGIN":
+            if message_type == MESSAGE_TYPES["LOGIN"]:
                 username = message_data.get("username")
                 password = message_data.get("password")
                 
@@ -123,7 +123,7 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Invalid username or password"})
                     
-            elif message_type == "GET_TOKEN":
+            elif message_type == MESSAGE_TYPES["GET_TOKEN"]:
                 username = message_data.get("username")
                 current_round = str(data["current_round"])
                 
@@ -154,7 +154,7 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "User not found"})
                     
-            elif message_type == "SEND_MESSAGE":
+            elif message_type == MESSAGE_TYPES["SEND_MESSAGE"]:
                 sender = message_data.get("sender")
                 recipient = message_data.get("recipient")
                 content = message_data.get("content")
@@ -198,18 +198,19 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Missing required fields"})
                     
-            elif message_type == "REQUEST_MESSAGES":
+            elif message_type == MESSAGE_TYPES["REQUEST_MESSAGES"]:
                 username = message_data.get("username")
-                
-                if username:
-                    user_messages = data["messages"].get(username, [])
+                round_number = message_data.get("round_number")
+                if username and round_number:
+                    messages = data["messages"].get(username, [])
                     response = create_message("SUCCESS", {
-                        "messages": user_messages
+                        "messages": messages,
+                        "round_number": round_number
                     })
                 else:
                     response = create_message("ERROR", {"error": "Missing username"})
                     
-            elif message_type == "FLAG_MESSAGE":
+            elif message_type == MESSAGE_TYPES["FLAG_MESSAGE"]:
                 username = message_data.get("username")
                 message_id = message_data.get("message_id")
                 reason = message_data.get("reason")
@@ -237,7 +238,7 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Missing required fields"})
                     
-            elif message_type == "GET_FLAGGED_MESSAGES":
+            elif message_type == MESSAGE_TYPES["GET_FLAGGED_MESSAGES"]:
                 username = message_data.get("username")
                 
                 if username and data["users"][username]["role"] == "moderator":
@@ -259,7 +260,7 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Unauthorized"})
                     
-            elif message_type == "BAN_TOKEN":
+            elif message_type == MESSAGE_TYPES["BAN_TOKEN"]:
                 moderator = message_data.get("moderator")
                 token = message_data.get("token")
                 
@@ -273,7 +274,7 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Unauthorized or invalid token"})
                     
-            elif message_type == "NEXT_ROUND":
+            elif message_type == MESSAGE_TYPES["NEXT_ROUND"]:
                 username = message_data.get("username")
                 
                 if username and data["users"][username]["role"] == "admin":
@@ -293,6 +294,7 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Unauthorized"})
                     
+
             elif message_type == "APPOINT_MODERATOR":
                 admin = message_data.get("admin")
                 target_user = message_data.get("target_user")
@@ -330,7 +332,8 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Unauthorized or missing fields"})
                     
-            elif message_type == "MODERATOR_FLAG":
+            elif message_type == MESSAGE_TYPES["MODERATOR_FLAG"]:
+
                 message_id = message_data.get("message_id")
                 reason = message_data.get("reason")
                 moderator = message_data.get("moderator")
@@ -341,15 +344,15 @@ def handle_client(conn, address):
                     for username, inbox in inboxes.items():
                         for round_num, messages in inbox.items():
                             for msg in messages:
-                                if msg['id'] == message_id:
+                                if msg["id"] == message_id:
                                     # Add to moderator's queue
                                     flagged_message = {
-                                        'message_id': message_id,
-                                        'reason': reason,
-                                        'content': msg['content'],
-                                        'sender': username,
-                                        'round_number': round_num,
-                                        'timestamp': str(uuid.uuid1())
+                                        "message_id": message_id,
+                                        "reason": reason,
+                                        "content": msg["content"],
+                                        "sender": username,
+                                        "round": round_num,
+                                        "timestamp": str(uuid.uuid1())
                                     }
                                     add_to_moderator_queue(moderator, flagged_message)
                                     message_found = True
@@ -360,45 +363,76 @@ def handle_client(conn, address):
                             break
                     
                     if message_found:
-                        response = create_message('SUCCESS', {
-                            'status': 'Message added to moderator queue',
-                            'moderator': moderator
+                        response = create_message("SUCCESS", {
+                            "status": "Message added to moderator queue",
+                            "moderator": moderator
                         })
                     else:
-                        response = create_message('ERROR', {'error': 'Message not found'})
+                        response = create_message("ERROR", {"error": "Message not found"})
                 else:
-                    response = create_message('ERROR', {'error': 'Missing required fields'})
+                    response = create_message("ERROR", {"error": "Missing required fields"})
 
-            elif message_type == "MODERATOR_QUEUE":
-                moderator = message_data.get('moderator')
+            elif message_type == MESSAGE_TYPES["MODERATOR_QUEUE"]:
+                moderator = message_data.get("moderator")
                 if moderator:
                     queue = get_moderator_queue(moderator)
-                    response = create_message('SUCCESS', {
-                        'messages': queue,
-                        'moderator': moderator
+                    response = create_message("SUCCESS", {
+                        "messages": queue,
+                        "moderator": moderator
                     })
                 else:
-                    response = create_message('ERROR', {'error': 'Missing moderator name'})
+                    response = create_message("ERROR", {"error": "Missing moderator name"})
 
-            elif message_type == "REVIEW_MESSAGE":
-                message_id = message_data.get('message_id')
-                action = message_data.get('action')
-                moderator = message_data.get('moderator')
+            elif message_type == MESSAGE_TYPES["REVIEW_MESSAGE"]:
+                message_id = message_data.get("message_id")
+                action = message_data.get("action")
+                moderator = message_data.get("moderator")
                 
-                if all([message_id, action, moderator]) and action in ['approve', 'reject']:
-                    # Remove message from moderator's queue
-                    queue = get_moderator_queue(moderator)
-                    for i, msg in enumerate(queue):
-                        if msg['message_id'] == message_id:
-                            queue.pop(i)
+                if all([message_id, action, moderator]) and action in ["approve", "reject", "ignore", "ban_sender"]:
+                    # Find the message in all users' messages
+                    message_found = False
+                    sender = None
+                    for username, messages in data["messages"].items():
+                        for msg in messages:
+                            if msg["id"] == message_id:
+                                message_found = True
+                                sender = msg["sender"]
+                                if action == "ban_sender":
+                                    # Ban the sender
+                                    data["users"][sender]["is_banned"] = True
+                                    save_data(data)
+                                break
+                        if message_found:
                             break
                     
-                    response = create_message('SUCCESS', {
-                        'status': f'Message {action}ed by {moderator}',
-                        'message_id': message_id
-                    })
+                    if message_found:
+                        # Remove message from moderator's queue
+                        queue = get_moderator_queue(moderator)
+                        for i, msg in enumerate(queue):
+                            if msg["message_id"] == message_id:
+                                queue.pop(i)
+                                break
+                        
+                        if action == "ignore":
+                            response = create_message("SUCCESS", {
+                                "status": f"Message marked as fine by {moderator}",
+                                "message_id": message_id
+                            })
+                        elif action == "ban_sender":
+                            response = create_message("SUCCESS", {
+                                "status": f"Message sender banned by {moderator}",
+                                "message_id": message_id,
+                                "banned_user": sender
+                            })
+                        else:
+                            response = create_message("SUCCESS", {
+                                "status": f"Message {action}ed by {moderator}",
+                                "message_id": message_id
+                            })
+                    else:
+                        response = create_message("ERROR", {"error": "Message not found"})
                 else:
-                    response = create_message('ERROR', {'error': 'Invalid review action or missing fields'})
+                    response = create_message("ERROR", {"error": "Invalid review action or missing fields"})
 
             else:
                 print(f"Unknown message type: {message_type}")
