@@ -1,46 +1,11 @@
 {
-    "users": {
-        "admin": {
-            "password": "admin123",
-            "role": "admin",
-            "anonymous_id": "anon_yYDbA0"
-        },
-        "moderator1": {
-            "password": "mod123",
-            "role": "moderator"
-        },
-        "user1": {
-            "password": "user123",
-            "role": "user",
-            "is_banned": false,
-            "anonymous_id": "anon_abc123"
-        },
-        "user2": {
-            "password": "user123",
-            "role": "user",
-            "is_banned": false,
-            "anonymous_id": "anon_def456"
-        },
-        "paul": {
-            "password": "paul123",
-            "role": "user",
-            "is_banned": false,
-            "anonymous_id": "anon_oglLjH"
-        }
-    },
-    "current_round": 2,
-    "round_tokens": {
-        "1": {
-            "user1": "token1_abc123",
-            "user2": "token1_def456",
-            "admin": "AfeGyFZn5frpQauF"
-        },
-        "2": {
-            "paul": "zWBfZFo31v81noly"
-        }
-    },
+    "users": {},
+    "current_round": 1,
+    "round_tokens": {},
     "used_tokens": [],
     "banned_tokens": [],
     "messages": {},
-    "flagged_messages": {}
+    "flagged_messages": [],
+    "encrypted_inboxes": {},
+    "moderator_queue": []
 }
