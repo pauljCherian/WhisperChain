@@ -15,7 +15,8 @@ NEXT_ROUND = "NEXT_ROUND"
 APPOINT_MODERATOR = "APPOINT_MODERATOR"
 SUCCESS = "SUCCESS"
 ERROR = "ERROR"
-REVIEW_MESSAGE = "REVIEW_MESSAGE"
+IGNORE_MESSAGE = "IGNORE_MESSAGE"
+BLOCK_MESSAGE = "BLOCK_MESSAGE"
 MODERATOR_FLAG = "MODERATOR_FLAG"
 MODERATOR_QUEUE = "MODERATOR_QUEUE"
 GET_MODERATORS = "GET_MODERATORS"
@@ -34,7 +35,7 @@ MESSAGE_TYPES = {
     "NEXT_ROUND": NEXT_ROUND,
     "APPOINT_MODERATOR": APPOINT_MODERATOR,
     "MODERATOR_QUEUE": MODERATOR_QUEUE,
-    "REVIEW_MESSAGE": REVIEW_MESSAGE,
+    "IGNORE_MESSAGE": IGNORE_MESSAGE,
     "GET_MODERATORS": GET_MODERATORS,
     "SUCCESS": SUCCESS,
     "ERROR": ERROR
@@ -62,7 +63,8 @@ def parse_message(message_str):
 # Message format examples:
 # SEND_MESSAGE: {'sender': 'username', 'recipient': 'username', 'content': 'encrypted_message'}
 # FLAG_MESSAGE: {'message_id': 'id', 'reason': 'reason_for_flag'}
-# REVIEW_MESSAGE: {'message_id': 'id', 'action': 'approve/reject'}
+# IGNORE_MESSAGE: {'message_id': 'id'}
 # REQUEST_MESSAGES: {'username': 'username', 'round_number': 'round_number'}
 # MODERATOR_FLAG: {'message_id': 'id', 'reason': 'reason_for_flag', 'moderator': 'moderator_name'}
 # MODERATOR_QUEUE: {'moderator': 'moderator_name', 'messages': [list of flagged messages]} 
+# BLOCK_MESSAGE: {'message_id': 'id', 'username': 'username'}

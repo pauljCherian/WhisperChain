@@ -1,11 +1,109 @@
 {
-    "users": {},
-    "current_round": 1,
-    "round_tokens": {},
-    "used_tokens": [],
+    "users": {
+        "admin": {
+            "password": "admin123",
+            "role": "admin",
+            "anonymous_id": "anon_yYDbA0"
+        },
+        "moderator1": {
+            "password": "mod123",
+            "role": "moderator",
+            "anonymous_id": "anon_Lze4Ib"
+        },
+        "user1": {
+            "password": "user123",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_abc123"
+        },
+        "user2": {
+            "password": "user123",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_def456"
+        },
+        "paul": {
+            "password": "paul123",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_oglLjH"
+        }
+    },
+    "current_round": 2,
+    "round_tokens": {
+        "1": {
+            "user1": "token1_abc123",
+            "user2": "token1_def456",
+            "admin": "AfeGyFZn5frpQauF"
+        },
+        "2": {
+            "paul": "zWBfZFo31v81noly",
+            "moderator1": "WxswLDClG8YM2OK9",
+            "user1": "daHjzAzPxgTLCXVZ"
+        }
+    },
+    "used_tokens": [
+        "zWBfZFo31v81noly",
+        "daHjzAzPxgTLCXVZ"
+    ],
     "banned_tokens": [],
     "messages": {},
-    "flagged_messages": [],
-    "encrypted_inboxes": {},
-    "moderator_queue": []
+    "flagged_messages": {
+        "msg1748108794": {
+            "message_id": "msg1748108794",
+            "reason": "earg",
+            "content": "hi paul",
+            "sender": "user1",
+            "sender_anonymous_id": "anon_abc123",
+            "timestamp": "2025-05-24T14:07:28.681709",
+            "flagged_by": "paul",
+            "round": "2",
+            "round_token": "daHjzAzPxgTLCXVZ",
+            "recipient": "paul",
+            "original_message": {
+                "id": "msg1748108794",
+                "message_id": "msg1748108794",
+                "sender": "user1",
+                "sender_anonymous_id": "anon_abc123",
+                "content": "hi paul",
+                "timestamp": "2025-05-24T13:46:34.074130",
+                "is_flagged": false,
+                "round": "2",
+                "round_token": "daHjzAzPxgTLCXVZ"
+            }
+        }
+    },
+    "moderator_queue": [],
+    "encrypted_inboxes": {
+        "user1": {
+            "2": [
+                {
+                    "id": "msg1748107571",
+                    "message_id": "msg1748107571",
+                    "sender": "paul",
+                    "sender_anonymous_id": "anon_oglLjH",
+                    "content": "hi user",
+                    "timestamp": "2025-05-24T13:26:11.435031",
+                    "is_flagged": false,
+                    "round": "2",
+                    "round_token": "zWBfZFo31v81noly"
+                }
+            ]
+        },
+        "paul": {
+            "2": [
+                {
+                    "id": "msg1748108794",
+                    "message_id": "msg1748108794",
+                    "sender": "user1",
+                    "sender_anonymous_id": "anon_abc123",
+                    "content": "hi paul",
+                    "timestamp": "2025-05-24T13:46:34.074130",
+                    "is_flagged": false,
+                    "round": "2",
+                    "round_token": "daHjzAzPxgTLCXVZ"
+                }
+            ]
+        }
+    }
 }

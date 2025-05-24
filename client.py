@@ -1,12 +1,7 @@
 import json
 import base64
 import socket
-from message_types import (
-    LOGIN, SEND_MESSAGE, REQUEST_MESSAGES, FLAG_MESSAGE,
-    GET_FLAGGED_MESSAGES, BAN_TOKEN, GET_TOKEN, NEXT_ROUND,
-    APPOINT_MODERATOR, REGISTER, SUCCESS, ERROR, REVIEW_MESSAGE,
-    create_message, parse_message, MESSAGE_TYPES
-)
+from message_types import *
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
@@ -192,26 +187,37 @@ def send_request(request_type, data=None):
             client_socket = connect_to_server()
             client_socket.send(message.encode())
         
-        # Get response
-        response = client_socket.recv(1024).decode()
-        if not response:
-            print("No response received from server")
-            return False, "No response from server"
+        # Set a timeout for receiving the response
+        client_socket.settimeout(10)  # Increased timeout to 10 seconds
+        
+        try:
+            # Get response
+            response = client_socket.recv(1024).decode()
+            if not response:
+                print("No response received from server")
+                return False, {"error": "No response from server"}
+                
+            print(f"Received: {response}")
             
-        print(f"Received: {response}")
-        
-        # Parse response
-        response_type, response_data = parse_message(response)
-        
-        if response_type == ERROR:
-            print(f"Error: {response_data.get('error', 'Unknown error')}")
-            return False, response_data
+            # Parse response
+            response_type, response_data = parse_message(response)
             
-        return True, response_data
-        
+            if response_type == ERROR:
+                print(f"Error: {response_data.get('error', 'Unknown error')}")
+                return False, response_data
+                
+            return True, response_data
+            
+        except socket.timeout:
+            print("Timeout waiting for server response")
+            return False, {"error": "Server response timeout"}
+            
     except Exception as e:
         print(f"Error in send_request: {str(e)}")
-        return False, str(e)
+        return False, {"error": str(e)}
+    finally:
+        # Reset timeout to blocking mode
+        client_socket.settimeout(None)
 
 def get_public_key(username):
     response = send_request("LOGIN", {'username': username})
@@ -311,9 +317,9 @@ def review_message(message_id, action):
     })
     
     if success:
-        if action == "approve":
+        if action == "ignore":
             print("Message marked as fine, no action taken")
-        elif action == "reject":
+        elif action == "block":
             print("Sender has been banned")
         else:
             print(f"Message {action}ed successfully!")
@@ -362,7 +368,7 @@ def read_messages():
             "round_number": round_number
         })
         
-        if success and data:
+        if success and isinstance(data, dict):
             messages = data.get("messages", [])
             
             if not messages:
@@ -379,7 +385,7 @@ def read_messages():
                     print("⚠️ This message has been flagged")
             return True
         else:
-            error_msg = data.get("error", "Unknown error") if data else "No response from server"
+            error_msg = data.get("error", "Unknown error") if isinstance(data, dict) else "No response from server"
             print(f"Error: {error_msg}")
             return False
             
@@ -438,68 +444,13 @@ def moderator_menu():
     while True:
         print("\nModerator Menu:")
         print("[1] View flagged messages")
-        print("[2] Ignore flagged message")
-        print("[3] Block user")
-        print("[4] Return to main menu")
+        print("[2] Return to main menu")
         
-        choice = input("Enter your choice (1-4): ")
+        choice = input("Enter your choice (1-2): ")
         
         if choice == "1":
-            # View flagged messages
-            success, data = send_request(GET_FLAGGED_MESSAGES, {
-                "username": current_user
-            })
-            
-            if success and data:
-                flagged_messages = data.get("flagged_messages", [])
-                if not flagged_messages:
-                    print("\nNo flagged messages found.")
-                else:
-                    print("\nFlagged Messages:")
-                    for msg in flagged_messages:
-                        print(f"\nMessage ID: {msg.get('message_id')}")
-                        print(f"Content: {msg.get('content')}")
-                        print(f"Sender Anonymous ID: {msg.get('sender_anonymous_id')}")
-                        print(f"Flagged by: {msg.get('flagged_by')}")
-                        print(f"Reason: {msg.get('reason')}")
-                        print(f"Timestamp: {msg.get('timestamp')}")
-                        print(f"Round Token: {msg.get('round_token')}")
-                        print("-" * 50)
-            else:
-                error_msg = data.get("error", "Unknown error") if isinstance(data, dict) else str(data)
-                print(f"\nError: {error_msg}")
-                
+            view_flagged_messages()
         elif choice == "2":
-            # Ignore flagged message
-            message_id = input("Enter message ID to ignore: ")
-            success, data = send_request(REVIEW_MESSAGE, {
-                "message_id": message_id,
-                "action": "ignore",
-                "username": current_user
-            })
-            
-            if success:
-                print("\nMessage ignored successfully.")
-            else:
-                error_msg = data.get("error", "Unknown error") if isinstance(data, dict) else str(data)
-                print(f"\nError: {error_msg}")
-                
-        elif choice == "3":
-            # Block user
-            message_id = input("Enter message ID to block user: ")
-            success, data = send_request(REVIEW_MESSAGE, {
-                "message_id": message_id,
-                "action": "block",
-                "username": current_user
-            })
-            
-            if success:
-                print("\nUser blocked successfully.")
-            else:
-                error_msg = data.get("error", "Unknown error") if isinstance(data, dict) else str(data)
-                print(f"\nError: {error_msg}")
-                
-        elif choice == "4":
             return
         else:
             print("\nInvalid choice. Please try again.")
@@ -539,31 +490,76 @@ def view_flagged_messages():
     """View flagged messages (moderator only)"""
     if user_role != "moderator":
         print("Only moderators can view flagged messages")
-        return False
+        return
         
-    success, data = send_request(GET_FLAGGED_MESSAGES, {
-        "username": current_user
-    })
-    
+    print("\n=== Flagged Messages ===")
+    success, data = send_request(MESSAGE_TYPES["GET_FLAGGED_MESSAGES"], {"username": current_user})
+        
     if success:
-        flagged_messages = data.get("flagged_messages", [])
-        if flagged_messages:
-            print("\nFlagged Messages:")
-            for msg in flagged_messages:
-                print(f"\nMessage ID: {msg.get('id')}")
-                print(f"From: {msg.get('sender')}")
-                print(f"Anonymous ID: {msg.get('sender_anonymous_id')}")
-                print(f"Content: {msg.get('content')}")
-                print(f"Time: {msg.get('timestamp')}")
-                print(f"Round: {msg.get('round')}")
-                print(f"Round Token: {msg.get('round_token')}")
-                print(f"Flagged by: {msg.get('flag_data', {}).get('flagged_by')}")
-                print(f"Reason: {msg.get('flag_data', {}).get('reason')}")
-                print("-" * 50)
-        else:
-            print("No flagged messages found")
-        return True
-    return False
+        flagged_messages = data.get("flagged_messages", {})
+        if not flagged_messages:
+            print("No flagged messages")
+            return
+                
+        for message_id, msg in flagged_messages.items():
+            print(f"\nMessage ID: {message_id}")
+            print(f"From: {msg.get('sender_anonymous_id', 'Unknown')}")
+            print(f"Content: {msg.get('content', 'No content')}")
+            print(f"Reason: {msg.get('reason', 'No reason provided')}")
+            print(f"Flagged by: {msg.get('flagged_by', 'Unknown')}")
+            print(f"Timestamp: {msg.get('timestamp', 'Unknown')}")
+            print("-" * 50)
+                
+        # Ask for action
+        while True:
+            print("\nOptions:")
+            print("1. Ignore flagged message")
+            print("2. Block sender's token")
+            print("3. Return to main menu")
+            
+            choice = input("Enter your choice (1-3): ")
+            
+            if choice == "3":
+                break
+            elif choice in ["1", "2"]:
+                message_id = input("Enter the message ID to take action on: ")
+                if message_id in flagged_messages:
+                    try:
+                        if choice == "1":
+                            # Ignore the message
+                            success, response = send_request(IGNORE_MESSAGE, {
+                                "message_id": message_id
+                            })
+                            if success:
+                                print("Message ignored successfully")
+                                # Remove from local view
+                                del flagged_messages[message_id]
+                            else:
+                                error_msg = response.get('error', 'Unknown error') if isinstance(response, dict) else str(response)
+                                print(f"Error ignoring message: {error_msg}")
+                        elif choice == "2":
+                            # Block the sender's token
+                            success, response = send_request(BLOCK_MESSAGE, {
+                                "message_id": message_id,
+                                "username": flagged_messages[message_id].get("sender_anonymous_id", "Unknown")
+                            })
+                            if success:
+                                blocked_token = response.get('blocked_token')
+                                print(f"Sender's token blocked successfully: {blocked_token}")
+                                # Remove from local view
+                                del flagged_messages[message_id]
+                            else:
+                                error_msg = response.get('error', 'Unknown error') if isinstance(response, dict) else str(response)
+                                print(f"Error blocking sender's token: {error_msg}")
+                    except Exception as e:
+                        print(f"Error processing action: {str(e)}")
+                else:
+                    print("Invalid message ID")
+            else:
+                print("Invalid choice")
+    else:
+        error_msg = data.get('error', 'Unknown error') if isinstance(data, dict) else str(data)
+        print(f"Error retrieving flagged messages: {error_msg}")
 
 def view_audit_log():
     """View audit log (moderator only)"""
