@@ -20,6 +20,12 @@
             "role": "user",
             "is_banned": false,
             "anonymous_id": "anon_def456"
+        },
+        "paul": {
+            "password": "paul123",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_oglLjH"
         }
     },
     "current_round": 2,
@@ -29,7 +35,9 @@
             "user2": "token1_def456",
             "admin": "AfeGyFZn5frpQauF"
         },
-        "2": {}
+        "2": {
+            "paul": "zWBfZFo31v81noly"
+        }
     },
     "used_tokens": [],
     "banned_tokens": [],
