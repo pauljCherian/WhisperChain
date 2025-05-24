@@ -4,7 +4,7 @@ import socket
 from message_types import (
     LOGIN, SEND_MESSAGE, REQUEST_MESSAGES, FLAG_MESSAGE,
     GET_FLAGGED_MESSAGES, BAN_TOKEN, GET_TOKEN, NEXT_ROUND,
-    APPOINT_MODERATOR, SUCCESS, ERROR, create_message, parse_message, MESSAGE_TYPES
+    APPOINT_MODERATOR, REGISTER, SUCCESS, ERROR, create_message, parse_message, MESSAGE_TYPES
 )
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -146,7 +146,8 @@ def main():
     while True:
         print("\nWelcome to the Secure Messaging System")
         print("[1] Login")
-        print("[2] Exit")
+        print("[2] Register")
+        print("[3] Exit")
         
         choice = input("Enter your choice: ")
         
@@ -161,6 +162,11 @@ def main():
                 else:
                     user_menu()
         elif choice == "2":
+            username = input("Enter desired username: ")
+            password = input("Enter password: ")
+            if register(username, password):
+                print("Registration successful! Please login.")
+        elif choice == "3":
             print("Goodbye")
             break
         else:
@@ -581,6 +587,23 @@ def get_round_token():
     })
     
     if success:
+        current_round_token = data.get("token")
+        current_round = data.get("round")
+        print(f"Got round token for round {current_round}")
+        return True
+    return False
+
+def register(username, password):
+    """Register a new user"""
+    success, data = send_request(REGISTER, {
+        "username": username,
+        "password": password
+    })
+    
+    if success:
+        print("Registration successful!")
+        # Store the token for the current round
+        global current_round_token, current_round
         current_round_token = data.get("token")
         current_round = data.get("round")
         print(f"Got round token for round {current_round}")
