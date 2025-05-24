@@ -22,52 +22,17 @@
             "anonymous_id": "anon_def456"
         }
     },
-    "current_round": 6,
+    "current_round": 2,
     "round_tokens": {
         "1": {
             "user1": "token1_abc123",
             "user2": "token1_def456",
             "admin": "AfeGyFZn5frpQauF"
         },
-        "2": {
-            "user1": "JVaDA4iRgxdthDlx",
-            "user2": "W00RQllAZSViCEuX",
-            "admin": "u7IbcbZOdeT01v0s"
-        },
-        "3": {
-            "admin": "q5Ct4ys2Vmw14EgZ",
-            "user2": "B3kZQhmwVs1mX0cj",
-            "user1": "tRjtwPuCUzXS8lyu"
-        },
-        "4": {
-            "user2": "PJckkL1yQjAPn940"
-        },
-        "5": {
-            "user2": "UAHFDoNKZraR7iBj",
-            "user1": "YQ0mab92LPUc54jr",
-            "admin": "avALQPpn48GOmAzA"
-        },
-        "6": {
-            "user2": "QrW7GegirLUq8AEP"
-        }
+        "2": {}
     },
-    "used_tokens": [
-        "QrW7GegirLUq8AEP"
-    ],
+    "used_tokens": [],
     "banned_tokens": [],
-    "messages": {
-        "user1": [
-            {
-                "id": "msg1748075360",
-                "sender": "user2",
-                "sender_anonymous_id": "anon_def456",
-                "content": "fuck you user1",
-                "timestamp": "2025-05-24T04:29:20.946262",
-                "is_flagged": false,
-                "round": 6,
-                "round_token": "QrW7GegirLUq8AEP"
-            }
-        ]
-    },
+    "messages": {},
     "flagged_messages": {}
 }
