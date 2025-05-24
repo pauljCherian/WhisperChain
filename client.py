@@ -4,7 +4,7 @@ import socket
 from message_types import (
     LOGIN, SEND_MESSAGE, REQUEST_MESSAGES, FLAG_MESSAGE,
     GET_FLAGGED_MESSAGES, BAN_TOKEN, GET_TOKEN, NEXT_ROUND,
-    SUCCESS, ERROR, create_message, parse_message, MESSAGE_TYPES
+    APPOINT_MODERATOR, SUCCESS, ERROR, create_message, parse_message, MESSAGE_TYPES
 )
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
