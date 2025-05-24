@@ -1,0 +1,412 @@
+{
+    "logs": [
+        {
+            "timestamp": "2025-05-24T18:41:11.798853",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_LOGIN",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:41:11.800068",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_LOGIN",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:41:11.801359",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_UNAUTHORIZED_FLAG_ATTEMPT",
+            "username": null,
+            "role": null,
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-moderator attempted to flag message msg123",
+                "event_type": "UNAUTHORIZED_FLAG_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:41:11.802972",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_LOGIN",
+            "username": "admin",
+            "role": "unknown",
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:41:11.804417",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_UNAUTHORIZED_MODERATOR_APPOINTMENT",
+            "username": null,
+            "role": null,
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-admin attempted to appoint testuser1 as moderator",
+                "event_type": "UNAUTHORIZED_MODERATOR_APPOINTMENT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:41:11.805853",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_LOGIN",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:41:11.806902",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_UNAUTHORIZED_TOKEN_BAN",
+            "username": null,
+            "role": null,
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-moderator attempted to ban token",
+                "event_type": "UNAUTHORIZED_TOKEN_BAN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:41:11.809190",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_LOGIN",
+            "username": "admin",
+            "role": "unknown",
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:41:11.811045",
+            "unix_timestamp": 1748126471,
+            "action": "SECURITY_UNAUTHORIZED_ROUND_START",
+            "username": null,
+            "role": null,
+            "session_id": "6a8053f0-f00d-4d0d-b006-ef9876db6105",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-admin attempted to start new round",
+                "event_type": "UNAUTHORIZED_ROUND_START"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.468770",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_LOGIN",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "e956477d-7ee6-4abb-a795-7aaa1cd4b1dc",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.475678",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_UNAUTHORIZED_FLAG_ATTEMPT",
+            "username": "testuser1",
+            "role": null,
+            "session_id": "e956477d-7ee6-4abb-a795-7aaa1cd4b1dc",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-moderator attempted to flag message msg123",
+                "event_type": "UNAUTHORIZED_FLAG_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.479354",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_LOGIN",
+            "username": "admin",
+            "role": "unknown",
+            "session_id": "e956477d-7ee6-4abb-a795-7aaa1cd4b1dc",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.480256",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_UNAUTHORIZED_MODERATOR_APPOINTMENT",
+            "username": "testuser1",
+            "role": null,
+            "session_id": "e956477d-7ee6-4abb-a795-7aaa1cd4b1dc",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-admin attempted to appoint testuser1 as moderator",
+                "event_type": "UNAUTHORIZED_MODERATOR_APPOINTMENT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.488157",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_UNAUTHORIZED_TOKEN_BAN",
+            "username": "testuser1",
+            "role": null,
+            "session_id": "e956477d-7ee6-4abb-a795-7aaa1cd4b1dc",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-moderator attempted to ban token",
+                "event_type": "UNAUTHORIZED_TOKEN_BAN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.491336",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_UNAUTHORIZED_ROUND_START",
+            "username": "admin",
+            "role": null,
+            "session_id": "e956477d-7ee6-4abb-a795-7aaa1cd4b1dc",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-admin attempted to start new round",
+                "event_type": "UNAUTHORIZED_ROUND_START"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.396939",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt: Empty response from server",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.421614",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt: Empty response from server",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.428765",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_UNAUTHORIZED_FLAG_ATTEMPT",
+            "username": null,
+            "role": null,
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-moderator attempted to flag message msg123",
+                "event_type": "UNAUTHORIZED_FLAG_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.452583",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN",
+            "username": "admin",
+            "role": "unknown",
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt: Empty response from server",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.458294",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_UNAUTHORIZED_MODERATOR_APPOINTMENT",
+            "username": null,
+            "role": null,
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-admin attempted to appoint testuser1 as moderator",
+                "event_type": "UNAUTHORIZED_MODERATOR_APPOINTMENT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.480093",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt: Empty response from server",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.482061",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_UNAUTHORIZED_TOKEN_BAN",
+            "username": null,
+            "role": null,
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-moderator attempted to ban token",
+                "event_type": "UNAUTHORIZED_TOKEN_BAN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.504117",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN",
+            "username": "admin",
+            "role": "unknown",
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Failed login attempt: Empty response from server",
+                "event_type": "LOGIN"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.509652",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_UNAUTHORIZED_ROUND_START",
+            "username": null,
+            "role": null,
+            "session_id": "5987d126-4fed-4879-b848-27a2cc62fb0a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Non-admin attempted to start new round",
+                "event_type": "UNAUTHORIZED_ROUND_START"
+            }
+        }
+    ]
+}

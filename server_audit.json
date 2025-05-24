@@ -1,0 +1,531 @@
+{
+    "logs": [
+        {
+            "timestamp": "2025-05-24T18:49:40.465105",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "c3df3545-5f1c-4677-aeec-a28342851756",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.465877",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_REGISTRATION_ATTEMPT",
+            "username": "testuser1",
+            "role": "unregistered",
+            "session_id": "75f5f854-85d3-4fc6-b1e7-22801f60639a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Registration attempt from IP 127.0.0.1",
+                "event_type": "REGISTRATION_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.466839",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "75f5f854-85d3-4fc6-b1e7-22801f60639a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.467353",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "75f5f854-85d3-4fc6-b1e7-22801f60639a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.472369",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_LOGIN_ATTEMPT",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "59b2c3c4-8572-457a-aee3-3bb57814aacb",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Login attempt from IP 127.0.0.1",
+                "event_type": "LOGIN_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.472930",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "59b2c3c4-8572-457a-aee3-3bb57814aacb",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.473828",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "59b2c3c4-8572-457a-aee3-3bb57814aacb",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.484347",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_LOGIN_ATTEMPT",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "eb14b03e-3263-4dc3-b38a-cf6c956cbd00",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Login attempt from IP 127.0.0.1",
+                "event_type": "LOGIN_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.485505",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "eb14b03e-3263-4dc3-b38a-cf6c956cbd00",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:49:40.486895",
+            "unix_timestamp": 1748126980,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "eb14b03e-3263-4dc3-b38a-cf6c956cbd00",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.342646",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_REGISTRATION_ATTEMPT",
+            "username": "testuser1",
+            "role": "unregistered",
+            "session_id": "2c69e35b-1ac9-4ac1-8ba9-151679214bea",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Registration attempt from IP 127.0.0.1",
+                "event_type": "REGISTRATION_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.360088",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "2c69e35b-1ac9-4ac1-8ba9-151679214bea",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.361664",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "2c69e35b-1ac9-4ac1-8ba9-151679214bea",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.364865",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_REGISTRATION_ATTEMPT",
+            "username": "testuser2",
+            "role": "unregistered",
+            "session_id": "ac3f6e14-0059-40c3-a525-cff80c31f17e",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Registration attempt from IP 127.0.0.1",
+                "event_type": "REGISTRATION_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.368535",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "ac3f6e14-0059-40c3-a525-cff80c31f17e",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.370103",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "ac3f6e14-0059-40c3-a525-cff80c31f17e",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.379871",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN_ATTEMPT",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "43d20579-ef0d-4731-9dd8-b6d9ef84148a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Login attempt from IP 127.0.0.1",
+                "event_type": "LOGIN_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.383980",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "43d20579-ef0d-4731-9dd8-b6d9ef84148a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.389437",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "43d20579-ef0d-4731-9dd8-b6d9ef84148a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.410896",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN_ATTEMPT",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "3bcda78c-92a8-42bb-b744-f973ce39eb12",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Login attempt from IP 127.0.0.1",
+                "event_type": "LOGIN_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.413617",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "3bcda78c-92a8-42bb-b744-f973ce39eb12",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.419055",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "3bcda78c-92a8-42bb-b744-f973ce39eb12",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.438609",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN_ATTEMPT",
+            "username": "admin",
+            "role": "unknown",
+            "session_id": "f83843b6-2627-41c2-a8b2-c7aa861a7f3d",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Login attempt from IP 127.0.0.1",
+                "event_type": "LOGIN_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.442306",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "f83843b6-2627-41c2-a8b2-c7aa861a7f3d",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.446989",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "f83843b6-2627-41c2-a8b2-c7aa861a7f3d",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.470490",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN_ATTEMPT",
+            "username": "testuser1",
+            "role": "unknown",
+            "session_id": "61a18744-eefb-4f2a-934d-d94afc7f665d",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Login attempt from IP 127.0.0.1",
+                "event_type": "LOGIN_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.473486",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "61a18744-eefb-4f2a-934d-d94afc7f665d",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.476345",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "61a18744-eefb-4f2a-934d-d94afc7f665d",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.489687",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_LOGIN_ATTEMPT",
+            "username": "admin",
+            "role": "unknown",
+            "session_id": "aded5e4b-4387-4fa1-9109-d34c1090407a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Login attempt from IP 127.0.0.1",
+                "event_type": "LOGIN_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.492505",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_ERROR",
+            "username": "system",
+            "role": "system",
+            "session_id": "aded5e4b-4387-4fa1-9109-d34c1090407a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Error handling client: local variable 'data' referenced before assignment",
+                "event_type": "ERROR"
+            }
+        },
+        {
+            "timestamp": "2025-05-24T18:55:24.495395",
+            "unix_timestamp": 1748127324,
+            "action": "SECURITY_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "aded5e4b-4387-4fa1-9109-d34c1090407a",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from IP 127.0.0.1",
+                "event_type": "DISCONNECT"
+            }
+        }
+    ]
+}

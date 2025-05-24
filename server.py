@@ -10,7 +10,11 @@ import hashlib
 import os 
 import base64
 import uuid
+from audit_logger import AuditLogger
 # from crypto_utils import *
+
+# Initialize audit logger
+audit_logger = AuditLogger("server_audit.json")
 
 def generate_token():
     """Generate a random token"""
@@ -67,8 +71,8 @@ def get_moderator_queue(moderator_name):
 
 def handle_client(conn, address):
     """Handle client connection"""
-    global data
-    print(f"New connection from {address}")
+    client_session_id = str(uuid.uuid4())
+    client_ip = address[0]
     
     while True:
         try:
@@ -101,6 +105,15 @@ def handle_client(conn, address):
                 username = message_data.get("username")
                 password = message_data.get("password")
                 
+                audit_logger.log_security_event(
+                    event_type="REGISTRATION_ATTEMPT",
+                    username=username,
+                    success=False,  # Will be updated if successful
+                    details=f"Registration attempt from IP {client_ip}",
+                    session_id=client_session_id,
+                    role="unregistered"
+                )
+                
                 print(f"\n=== Registration Attempt ===")
                 print(f"Username: {username}")
                 print(f"User exists: {username in data['users']}")
@@ -118,6 +131,15 @@ def handle_client(conn, address):
                         "is_banned": False,
                         "anonymous_id": generate_anonymous_id()
                     }
+                    
+                    audit_logger.log_security_event(
+                        event_type="REGISTRATION_SUCCESS",
+                        username=username,
+                        success=True,
+                        details=f"New user registered from IP {client_ip}",
+                        session_id=client_session_id,
+                        role="user"
+                    )
                     
                     # Generate token for current round
                     current_round = str(data["current_round"])
@@ -144,6 +166,15 @@ def handle_client(conn, address):
                 username = message_data.get("username")
                 password = message_data.get("password")
                 
+                audit_logger.log_security_event(
+                    event_type="LOGIN_ATTEMPT",
+                    username=username,
+                    success=False,  # Will be updated if successful
+                    details=f"Login attempt from IP {client_ip}",
+                    session_id=client_session_id,
+                    role="unknown"
+                )
+                
                 print(f"\n=== Login Attempt ===")
                 print(f"Username: {username}")
                 print(f"User exists: {username in data['users']}")
@@ -153,6 +184,14 @@ def handle_client(conn, address):
                 
                 if username == "admin" and password == "admin123":
                     # Special case for admin
+                    audit_logger.log_security_event(
+                        event_type="ADMIN_LOGIN",
+                        username=username,
+                        success=True,
+                        details=f"Admin login from IP {client_ip}",
+                        session_id=client_session_id,
+                        role="admin"
+                    )
                     if "admin" not in data["users"]:
                         data["users"]["admin"] = {
                             "password": "admin123",
@@ -166,9 +205,18 @@ def handle_client(conn, address):
                         "anonymous_id": data["users"]["admin"]["anonymous_id"]
                     })
                 elif username in data["users"] and data["users"][username]["password"] == password:
+                    user_role = data["users"][username]["role"]
+                    audit_logger.log_security_event(
+                        event_type="LOGIN_SUCCESS",
+                        username=username,
+                        success=True,
+                        details=f"User login from IP {client_ip}",
+                        session_id=client_session_id,
+                        role=user_role
+                    )
                     response = create_message("SUCCESS", {
                         "message": "Login successful",
-                        "role": data["users"][username]["role"],
+                        "role": user_role,
                         "anonymous_id": data["users"][username]["anonymous_id"]
                     })
                 else:
@@ -211,6 +259,19 @@ def handle_client(conn, address):
                 content = message_data.get("content")
                 round_token = message_data.get("token")
                 current_round = str(data["current_round"])
+                
+                audit_logger.log_event(
+                    action="MESSAGE_ATTEMPT",
+                    username=sender,
+                    role=data["users"][sender]["role"],
+                    session_id=client_session_id,
+                    token_id=round_token,
+                    round_number=data["current_round"],
+                    additional_data={
+                        "recipient": recipient,
+                        "ip_address": client_ip
+                    }
+                )
                 
                 # Check if sender is admin (admins can't send messages)
                 if data["users"][sender]["role"] == "admin":
@@ -348,6 +409,15 @@ def handle_client(conn, address):
                 admin = message_data.get("admin")
                 target_user = message_data.get("target_user")
                 
+                audit_logger.log_security_event(
+                    event_type="MODERATOR_APPOINTMENT_ATTEMPT",
+                    username=admin,
+                    success=False,
+                    details=f"Attempt to appoint {target_user} as moderator from IP {client_ip}",
+                    session_id=client_session_id,
+                    role=data["users"][admin]["role"] if admin in data["users"] else "unknown"
+                )
+                
                 print(f"\n=== Appoint Moderator Attempt ===")
                 print(f"Admin: {admin}")
                 print(f"Target User: {target_user}")
@@ -465,29 +535,73 @@ def handle_client(conn, address):
             print(f"\n=== Error ===")
             print(f"Error handling client {address}: {str(e)}")
             print("=============\n")
+            audit_logger.log_security_event(
+                event_type="ERROR",
+                username="system",
+                success=False,
+                details=f"Error handling client: {str(e)}",
+                session_id=client_session_id,
+                role="system"
+            )
             break
     
-    print(f"Connection from {address} closed")
+    # Log disconnection
+    audit_logger.log_security_event(
+        event_type="DISCONNECT",
+        username="unknown",
+        success=True,
+        details=f"Client disconnected from IP {client_ip}",
+        session_id=client_session_id,
+        role="unknown"
+    )
     conn.close()
 
 def main():
+    """Main function to start the server"""
+    global server_socket
+    
     host = socket.gethostname()
-    port = 5001
+    base_port = 5001
+    max_port_attempts = 10  # Try up to 10 different ports
     
-    server_socket = socket.socket()
-    server_socket.bind((host, port))
-    server_socket.listen(5)
+    print("Starting WhisperChain server...")
     
-    print(f"Server started on {host}:{port}")
-    print("\n=== Available Users ===")
-    for username, user_data in data["users"].items():
-        print(f"Username: {username}, Password: {user_data['password']}, Role: {user_data['role']}")
-    print("=====================\n")
+    # Try different ports if the default one is in use
+    for port in range(base_port, base_port + max_port_attempts):
+        try:
+            server_socket = socket.socket()
+            # Set SO_REUSEADDR option to allow reuse of local addresses
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind((host, port))
+            server_socket.listen(5)  # Allow up to 5 pending connections
+            print(f"Server started successfully on port {port}")
+            print(f"Waiting for clients on {host}:{port}...")
+            break
+        except OSError as e:
+            if e.errno == 48:  # Address already in use
+                print(f"Port {port} is already in use, trying next port...")
+                if port == base_port + max_port_attempts - 1:
+                    print("Could not find an available port. Please try again later.")
+                    return
+                continue
+            else:
+                print(f"Error starting server: {e}")
+                return
     
-    while True:
-        conn, address = server_socket.accept()
-        client_thread = threading.Thread(target=handle_client, args=(conn, address))
-        client_thread.start()
+    try:
+        while True:
+            client_socket, address = server_socket.accept()
+            print(f"Connection from: {str(address)}")
+            # Create a new thread for each client
+            client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
+            client_thread.daemon = True  # Set as daemon thread so it closes when main thread closes
+            client_thread.start()
+    except KeyboardInterrupt:
+        print("\nServer shutting down...")
+    finally:
+        if server_socket:
+            server_socket.close()
+            print("Server socket closed.")
 
 if __name__ == "__main__":
     main()
