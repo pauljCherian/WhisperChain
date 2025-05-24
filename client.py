@@ -4,7 +4,7 @@ import socket
 from message_types import (
     LOGIN, SEND_MESSAGE, REQUEST_MESSAGES, FLAG_MESSAGE,
     GET_FLAGGED_MESSAGES, BAN_TOKEN, GET_TOKEN, NEXT_ROUND,
-    SUCCESS, ERROR, create_message, parse_message, MESSAGE_TYPES
+    APPOINT_MODERATOR, SUCCESS, ERROR, create_message, parse_message, MESSAGE_TYPES
 )
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -391,17 +391,37 @@ def admin_menu():
     while True:
         print("\nAdmin Menu:")
         print("[1] Start new round")
-        print("[2] Exit")
+        print("[2] Appoint moderator")
+        print("[3] Exit")
         
         choice = input("Enter your choice: ")
         
         if choice == "1":
             start_new_round()
         elif choice == "2":
+            target_user = input("Username to make moderator: ")
+            appoint_moderator(target_user)
+        elif choice == "3":
             print("Goodbye")
             break
         else:
             print("Invalid choice")
+
+def appoint_moderator(target_user):
+    """Appoint a user as moderator (admin only)"""
+    if not current_user or user_role != "admin":
+        print("Only admins can appoint moderators")
+        return False
+        
+    success, data = send_request(APPOINT_MODERATOR, {
+        "admin": current_user,
+        "target_user": target_user
+    })
+    
+    if success:
+        print(f"User {target_user} is now a moderator")
+        return True
+    return False
 
 def moderator_menu():
     """Menu for moderator actions"""

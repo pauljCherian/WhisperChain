@@ -11,6 +11,7 @@ import os
 import base64
 import uuid
 
+
 def generate_token():
     """Generate a random token"""
     return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -66,6 +67,7 @@ def get_moderator_queue(moderator_name):
 
 def handle_client(conn, address):
     """Handle client connection"""
+    global data
     print(f"New connection from {address}")
     
     while True:
@@ -292,7 +294,46 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Unauthorized"})
                     
+
+            elif message_type == "APPOINT_MODERATOR":
+                admin = message_data.get("admin")
+                target_user = message_data.get("target_user")
+                
+                print(f"\n=== Appoint Moderator Attempt ===")
+                print(f"Admin: {admin}")
+                print(f"Target User: {target_user}")
+                print(f"Admin exists: {admin in data['users']}")
+                if admin in data["users"]:
+                    print(f"Admin role: {data['users'][admin]['role']}")
+                print(f"Target exists: {target_user in data['users']}")
+                if target_user in data["users"]:
+                    print(f"Target current role: {data['users'][target_user]['role']}")
+                print("===============================\n")
+                
+                if admin and target_user and data["users"][admin]["role"] == "admin":
+                    if target_user in data["users"]:
+                        if data["users"][target_user]["role"] != "admin":  # Can't change admin roles
+                            # Update role in memory
+                            data["users"][target_user]["role"] = "moderator"
+                            # Save to file
+                            save_data(data)
+                            # Reload data to ensure consistency
+                            data = load_data()
+                            print(f"\n=== Role Change Successful ===")
+                            print(f"User {target_user} is now a moderator")
+                            print("===========================\n")
+                            response = create_message("SUCCESS", {
+                                "message": f"User {target_user} is now a moderator"
+                            })
+                        else:
+                            response = create_message("ERROR", {"error": "Cannot change admin roles"})
+                    else:
+                        response = create_message("ERROR", {"error": "Target user not found"})
+                else:
+                    response = create_message("ERROR", {"error": "Unauthorized or missing fields"})
+                    
             elif message_type == MESSAGE_TYPES["MODERATOR_FLAG"]:
+
                 message_id = message_data.get("message_id")
                 reason = message_data.get("reason")
                 moderator = message_data.get("moderator")
