@@ -97,24 +97,75 @@ def handle_client(conn, address):
                 continue
             
             # Handle message based on type
-            if message_type == "LOGIN":
+            if message_type == "REGISTER":
+                username = message_data.get("username")
+                password = message_data.get("password")
+                
+                print(f"\n=== Registration Attempt ===")
+                print(f"Username: {username}")
+                print(f"User exists: {username in data['users']}")
+                print("===========================\n")
+                
+                if username == "admin":
+                    response = create_message("ERROR", {"error": "Cannot register as admin"})
+                elif username in data["users"]:
+                    response = create_message("ERROR", {"error": "Username already exists"})
+                elif username and password:
+                    # Create new user
+                    data["users"][username] = {
+                        "password": password,
+                        "role": "user",
+                        "is_banned": False,
+                        "anonymous_id": generate_anonymous_id()
+                    }
+                    
+                    # Generate token for current round
+                    current_round = str(data["current_round"])
+                    if current_round not in data["round_tokens"]:
+                        data["round_tokens"][current_round] = {}
+                    
+                    # Generate a new token that hasn't been used
+                    while True:
+                        new_token = generate_token()
+                        if new_token not in data["used_tokens"] and new_token not in data["banned_tokens"]:
+                            data["round_tokens"][current_round][username] = new_token
+                            break
+                    
+                    save_data(data)
+                    response = create_message("SUCCESS", {
+                        "message": "Registration successful",
+                        "token": data["round_tokens"][current_round][username],
+                        "round": data["current_round"]
+                    })
+                else:
+                    response = create_message("ERROR", {"error": "Missing username or password"})
+                    
+            elif message_type == "LOGIN":
                 username = message_data.get("username")
                 password = message_data.get("password")
                 
                 print(f"\n=== Login Attempt ===")
                 print(f"Username: {username}")
-                print(f"Password: {password}")
                 print(f"User exists: {username in data['users']}")
                 if username in data["users"]:
                     print(f"Password matches: {data['users'][username]['password'] == password}")
                 print("=====================\n")
                 
-                if username in data["users"] and data["users"][username]["password"] == password:
-                    # Generate anonymous ID if user doesn't have one
-                    if "anonymous_id" not in data["users"][username]:
-                        data["users"][username]["anonymous_id"] = generate_anonymous_id()
+                if username == "admin" and password == "admin123":
+                    # Special case for admin
+                    if "admin" not in data["users"]:
+                        data["users"]["admin"] = {
+                            "password": "admin123",
+                            "role": "admin",
+                            "anonymous_id": generate_anonymous_id()
+                        }
                         save_data(data)
-                    
+                    response = create_message("SUCCESS", {
+                        "message": "Login successful",
+                        "role": "admin",
+                        "anonymous_id": data["users"]["admin"]["anonymous_id"]
+                    })
+                elif username in data["users"] and data["users"][username]["password"] == password:
                     response = create_message("SUCCESS", {
                         "message": "Login successful",
                         "role": data["users"][username]["role"],
