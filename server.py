@@ -292,6 +292,25 @@ def handle_client(conn, address):
                 else:
                     response = create_message("ERROR", {"error": "Unauthorized"})
                     
+            elif message_type == "APPOINT_MODERATOR":
+                admin = message_data.get("admin")
+                target_user = message_data.get("target_user")
+                
+                if admin and target_user and data["users"][admin]["role"] == "admin":
+                    if target_user in data["users"]:
+                        if data["users"][target_user]["role"] != "admin":  # Can't change admin roles
+                            data["users"][target_user]["role"] = "moderator"
+                            save_data(data)
+                            response = create_message("SUCCESS", {
+                                "message": f"User {target_user} is now a moderator"
+                            })
+                        else:
+                            response = create_message("ERROR", {"error": "Cannot change admin roles"})
+                    else:
+                        response = create_message("ERROR", {"error": "Target user not found"})
+                else:
+                    response = create_message("ERROR", {"error": "Unauthorized or missing fields"})
+                    
             elif message_type == "MODERATOR_FLAG":
                 message_id = message_data.get("message_id")
                 reason = message_data.get("reason")
