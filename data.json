@@ -35,6 +35,18 @@
             "role": "user",
             "is_banned": false,
             "anonymous_id": "anon_VKDT5L"
+        },
+        "bluebird": {
+            "password": "57f+FSf0heYvTcylJ57Jj7OGe8FFo6ZvfB1wub9pUhE=",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_wx7O53"
+        },
+        "cardinal": {
+            "password": "zxIgknxxKAj/NrIXB9tjTdTqxIAL+751a8UMTUpPhqw=",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_KDlBUr"
         }
     },
     "current_round": 1,
@@ -45,7 +57,9 @@
             "alice": "hHWpk9wvTnF5qAt7",
             "bob": "9MoF2wmkmEGIdtf1",
             "chicken": "Hw6uDCHOSi5Gjx0k",
-            "pigeon": "0TjdqwQftiKKEs8y"
+            "pigeon": "0TjdqwQftiKKEs8y",
+            "bluebird": "X6hPBHnyEjBypjW6",
+            "cardinal": "YPw1NE6SlrSb7vYv"
         }
     },
     "used_tokens": [],
