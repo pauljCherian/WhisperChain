@@ -1,0 +1,6 @@
+{"timestamp": "2025-05-25T18:37:02.520923", "action": "REGISTRATION", "user_role": "unregistered", "round_token": null, "round_number": 1, "event_details": {"success": true, "username": "waffle"}}
+{"timestamp": "2025-05-25T18:37:13.458367", "action": "REGISTRATION", "user_role": "unregistered", "round_token": null, "round_number": 1, "event_details": {"success": true, "username": "pancake"}}
+{"timestamp": "2025-05-25T18:37:20.552068", "action": "LOGIN", "user_role": "unknown", "round_token": null, "round_number": 1, "event_details": {"success": false, "username": "waffle", "error": "Invalid username or password"}}
+{"timestamp": "2025-05-25T18:37:40.872964", "action": "LOGIN", "user_role": "unknown", "round_token": null, "round_number": 1, "event_details": {"success": false, "username": "waffle", "error": "Invalid username or password"}}
+{"timestamp": "2025-05-25T18:37:52.000995", "action": "LOGIN", "user_role": "user", "round_token": null, "round_number": 1, "event_details": {"success": true, "username": "pancake"}}
+{"timestamp": "2025-05-25T18:38:04.652941", "action": "SEND_MESSAGE", "user_role": "user", "round_token": "Pr5rHtaIlfEzU3tP", "round_number": 4, "event_details": {"success": true, "recipient": "waffle", "anonymous_id": "anon_IFeid1"}}

@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from audit_logger import AuditLogger
 
 # Global variables
 current_user = None
@@ -18,7 +19,7 @@ current_anonymous_id = None
 current_round = 1
 private_key = None
 moderator_queue = []  # Local queue for moderator messages
-
+audit_logger = AuditLogger()
 # helper functions
 def write_json(filename, data):
     with open(filename, 'w') as json_file:
@@ -79,12 +80,33 @@ def login(username, password):
         current_user = username
         user_role = data.get("role")
         current_anonymous_id = data.get("anonymous_id")
+        
+        # Log successful login
+        audit_logger.log_event(
+            action="LOGIN",
+            user_role=user_role,
+            round_token=current_round_token,
+            round_number=current_round,
+            event_details={"success": True, "username": username}
+        )
+        
         print(f"Login successful! Role: {user_role}")
-        print(f"Your anonymous ID: {current_anonymous_id}")
+        if current_anonymous_id:
+            print(f"Your anonymous ID: {current_anonymous_id}")
         # Get token for current round
         get_round_token()
         return True
-    return False
+    else:
+        # Log failed login attempt
+        error_msg = data.get('error', 'Unknown error') if isinstance(data, dict) else str(data)
+        audit_logger.log_event(
+            action="LOGIN",
+            user_role="unknown",
+            round_number=current_round,
+            event_details={"success": False, "username": username, "error": error_msg}
+        )
+        print(f"Login failed: {error_msg}")
+        return False
 
 def hash_password(password):
     # Generate a random salt
@@ -315,10 +337,33 @@ def send_message(recipient, content):
         })
         
         if success:
+            audit_logger.log_event(
+                action="SEND_MESSAGE",
+                user_role=user_role,
+                round_token=current_round_token,
+                round_number=current_round,
+                event_details={
+                    "success": True,
+                    "recipient": recipient,
+                    "anonymous_id": current_anonymous_id
+                }
+            )
             print("Message sent successfully")
             current_round_token = None  # Token used, clear it
             return True
         else:
+            audit_logger.log_event(
+                action="SEND_MESSAGE",
+                user_role=user_role,
+                round_token=current_round_token,
+                round_number=current_round,
+                event_details={
+                    "success": False,
+                    "recipient": recipient,
+                    "error": data.get("error", "Unknown error"),
+                    "anonymous_id": current_anonymous_id
+                }
+            )
             print(f"Failed to send message: {data.get('error', 'Unknown error')}")
             return False
             
@@ -350,10 +395,33 @@ def flag_message(message_id, reason):
     success, data = send_request(FLAG_MESSAGE, request_data)
     
     if success:
+        audit_logger.log_event(
+            action="FLAG_MESSAGE",
+            user_role=user_role,
+            round_token=current_round_token,
+            round_number=current_round,
+            event_details={
+                "success": True,
+                "message_id": message_id,
+                "reason": reason
+            }
+        )
         print("Message flagged successfully!")
         return True
     else:
         error_msg = data.get('error', 'Unknown error') if isinstance(data, dict) else str(data)
+        audit_logger.log_event(
+            action="FLAG_MESSAGE",
+            user_role=user_role,
+            round_token=current_round_token,
+            round_number=current_round,
+            event_details={
+                "success": False,
+                "message_id": message_id,
+                "reason": reason,
+                "error": error_msg
+            }
+        )
         print(f"Error flagging message: {error_msg}")
         return False
 
@@ -392,6 +460,17 @@ def review_message(message_id, action):
     })
     
     if success:
+        audit_logger.log_event(
+            action="REVIEW_MESSAGE",
+            user_role=user_role,
+            round_token=current_round_token,
+            round_number=current_round,
+            event_details={
+                "success": True,
+                "message_id": message_id,
+                "action": action
+            }
+        )
         if action == "ignore":
             print("Message marked as fine, no action taken")
         elif action == "block":
@@ -402,6 +481,18 @@ def review_message(message_id, action):
         get_moderator_queue()
         return True
     else:
+        audit_logger.log_event(
+            action="REVIEW_MESSAGE",
+            user_role=user_role,
+            round_token=current_round_token,
+            round_number=current_round,
+            event_details={
+                "success": False,
+                "message_id": message_id,
+                "action": action,
+                "error": data.get('error', 'Unknown error')
+            }
+        )
         print(f"Error reviewing message: {data.get('error', 'Unknown error')}")
         return False
 
@@ -764,10 +855,29 @@ def register(username, password):
         # Store the token for the current round
         global current_round_token, current_round
         current_round_token = data.get("token")
-        current_round = data.get("round")
+        current_round = data.get("round", 1)
+        
+        # Log successful registration
+        audit_logger.log_event(
+            action="REGISTRATION",
+            user_role="unregistered",
+            round_number=current_round,
+            event_details={"success": True, "username": username}
+        )
+        
         print(f"Got round token for round {current_round}")
         return True
-    return False
+    else:
+        error_msg = data.get('error', 'Unknown error')
+        # Log failed registration
+        audit_logger.log_event(
+            action="REGISTRATION",
+            user_role="unregistered",
+            round_number=current_round,
+            event_details={"success": False, "username": username, "error": error_msg}
+        )
+        print(f"Registration failed: {error_msg}")
+        return False
 
 def block_user(username):
     """Block a user from sending messages"""
