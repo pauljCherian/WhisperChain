@@ -1,18 +1,13 @@
 import json
 import base64
 import socket
-
 import os
 from message_types import *
-import uuid
-
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives import serialization
-
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from audit_logger import AuditLogger
 
 # Global variables
 current_user = None
@@ -23,8 +18,6 @@ current_anonymous_id = None
 current_round = 1
 private_key = None
 moderator_queue = []  # Local queue for moderator messages
-session_id = str(uuid.uuid4())  # Generate a unique session ID
-audit_logger = AuditLogger()  # Initialize the audit logger
 
 # helper functions
 def write_json(filename, data):
@@ -37,28 +30,13 @@ def read_json(filename):
 
 def connect_to_server():
     """Connect to the server"""
-    global client_socket
     host = socket.gethostname()
-    base_port = 5001
-    max_port_attempts = 10
+    port = 5001
     
-    for port in range(base_port, base_port + max_port_attempts):
-        try:
-            client_socket = socket.socket()
-            client_socket.connect((host, port))
-            print(f"Connected to server on port {port}")
-            return client_socket
-        except ConnectionRefusedError:
-            print(f"Connection refused on port {port}, trying next port...")
-            if port == base_port + max_port_attempts - 1:
-                print("Could not connect to server on any port")
-                return None
-            continue
-        except Exception as e:
-            print(f"Failed to connect on port {port}: {str(e)}")
-            return None
-    
-    return None
+    client_socket = socket.socket()
+    client_socket.connect((host, port))
+    print("Connected to server")
+    return client_socket
 
 def load_user_role(username):
     """Load user role from roles.json"""
@@ -97,39 +75,15 @@ def login(username, password):
         "password": hashed_password
     })
     
-    if success and isinstance(data, dict):
+    if success:
         current_user = username
-        user_role = data.get("role", "user")
+        user_role = data.get("role")
         current_anonymous_id = data.get("anonymous_id")
-        
-        # Log successful login
-        audit_logger.log_security_event(
-            event_type="LOGIN",
-            username=username,
-            success=True,
-            details="Successful login",
-            session_id=session_id,
-            role=user_role
-        )
-        
         print(f"Login successful! Role: {user_role}")
-        if current_anonymous_id:
-            print(f"Your anonymous ID: {current_anonymous_id}")
+        print(f"Your anonymous ID: {current_anonymous_id}")
         # Get token for current round
         get_round_token()
         return True
-    
-    # Log failed login attempt
-    error_msg = data.get('error', 'Unknown error') if isinstance(data, dict) else str(data)
-    audit_logger.log_security_event(
-        event_type="LOGIN",
-        username=username,
-        success=False,
-        details=f"Failed login attempt: {error_msg}",
-        session_id=session_id,
-        role="unknown"
-    )
-    print(f"Login failed: {error_msg}")
     return False
 
 def hash_password(password):
@@ -260,20 +214,20 @@ def send_request(request_type, data=None):
         data = {}
     
     try:
-        # Always try to establish a fresh connection for each request
-        client_socket = connect_to_server()
-        if client_socket is None:
-            return False, {"error": "Could not connect to server"}
-        
         # Create and send message
         message = create_message(request_type, data)
         print(f"Sending: {message}")
         
-        # Send the message
-        client_socket.send(message.encode())
+        # Try to send the message, reconnect if needed
+        try:
+            client_socket.send(message.encode())
+        except (BrokenPipeError, ConnectionResetError):
+            print("Connection lost. Attempting to reconnect...")
+            client_socket = connect_to_server()
+            client_socket.send(message.encode())
         
         # Set a timeout for receiving the response
-        client_socket.settimeout(10)  # 10 second timeout
+        client_socket.settimeout(10)  # Increased timeout to 10 seconds
         
         try:
             # Get response
@@ -301,14 +255,8 @@ def send_request(request_type, data=None):
         print(f"Error in send_request: {str(e)}")
         return False, {"error": str(e)}
     finally:
-        # Always close the socket after the request
-        if client_socket:
-            try:
-                client_socket.close()
-            except:
-                pass
-        client_socket = None
-
+        # Reset timeout to blocking mode
+        client_socket.settimeout(None)
 
 def get_public_key(recipient):
     """
@@ -348,7 +296,6 @@ def send_message(recipient, content):
         if not get_round_token():
             return False
     
-
     try:
         # Get and validate public key
         public_key = get_public_key(recipient)
@@ -368,35 +315,10 @@ def send_message(recipient, content):
         })
         
         if success:
-            audit_logger.log_event(
-                action="SEND_MESSAGE",
-                username=current_user,
-                role=user_role,
-                session_id=session_id,
-                token_id=current_round_token,
-                round_number=current_round,
-                additional_data={
-                    "recipient": recipient,
-                    "anonymous_id": current_anonymous_id
-                }
-            )
             print("Message sent successfully")
             current_round_token = None  # Token used, clear it
             return True
         else:
-            audit_logger.log_event(
-                action="SEND_MESSAGE_FAILED",
-                username=current_user,
-                role=user_role,
-                session_id=session_id,
-                token_id=current_round_token,
-                round_number=current_round,
-                additional_data={
-                    "recipient": recipient,
-                    "error": data.get("error", "Unknown error"),
-                    "anonymous_id": current_anonymous_id
-                }
-            )
             print(f"Failed to send message: {data.get('error', 'Unknown error')}")
             return False
             
@@ -411,7 +333,6 @@ def flag_message(message_id, reason):
     """Flag a message for moderator review"""
     if not current_user:
         print("Error: You must be logged in to flag messages")
-        #**add this to audit log somewhere**
         return False
 
     print("\n=== Flagging Message ===")
@@ -427,35 +348,12 @@ def flag_message(message_id, reason):
     print(f"Sending request: {request_data}")
 
     success, data = send_request(FLAG_MESSAGE, request_data)
-
+    
     if success:
-        audit_logger.log_event(
-            action="FLAG_MESSAGE",
-            username=current_user,
-            role=user_role,
-            session_id=session_id,
-            round_number=current_round,
-            additional_data={
-                "message_id": message_id,
-                "reason": reason
-            }
-        )
         print("Message flagged successfully!")
         return True
     else:
         error_msg = data.get('error', 'Unknown error') if isinstance(data, dict) else str(data)
-        audit_logger.log_event(
-            action="FLAG_MESSAGE_FAILED",
-            username=current_user,
-            role=user_role,
-            session_id=session_id,
-            round_number=current_round,
-            additional_data={
-                "message_id": message_id,
-                "reason": reason,
-                "error": error_msg
-            }
-        )
         print(f"Error flagging message: {error_msg}")
         return False
 
@@ -623,14 +521,6 @@ def admin_menu():
 def appoint_moderator(target_user):
     """Appoint a user as moderator (admin only)"""
     if not current_user or user_role != "admin":
-        audit_logger.log_security_event(
-            event_type="UNAUTHORIZED_MODERATOR_APPOINTMENT",
-            username=current_user,
-            success=False,
-            details=f"Non-admin attempted to appoint {target_user} as moderator",
-            session_id=session_id,
-            role=user_role
-        )
         print("Only admins can appoint moderators")
         return False
         
@@ -640,14 +530,6 @@ def appoint_moderator(target_user):
     })
     
     if success:
-        audit_logger.log_security_event(
-            event_type="MODERATOR_APPOINTMENT",
-            username=current_user,
-            success=True,
-            details=f"Appointed {target_user} as moderator",
-            session_id=session_id,
-            role=user_role
-        )
         print(f"User {target_user} is now a moderator")
         return True
     return False
@@ -680,14 +562,6 @@ def moderator_menu():
 def ban_token(token):
     """Ban a token (moderator only)"""
     if not current_user or user_role != "moderator":
-        audit_logger.log_security_event(
-            event_type="UNAUTHORIZED_TOKEN_BAN",
-            username=current_user,
-            success=False,
-            details=f"Non-moderator attempted to ban token",
-            session_id=session_id,
-            role=user_role
-        )
         print("Only moderators can ban tokens")
         return False
         
@@ -697,17 +571,6 @@ def ban_token(token):
     })
     
     if success:
-        audit_logger.log_event(
-            action="BAN_TOKEN",
-            username=current_user,
-            role=user_role,
-            session_id=session_id,
-            token_id=token,
-            round_number=current_round,
-            additional_data={
-                "banned_token": token
-            }
-        )
         print("Token banned successfully")
         return True
     return False
@@ -715,14 +578,6 @@ def ban_token(token):
 def start_new_round():
     """Start a new round (admin only)"""
     if not current_user or user_role != "admin":
-        audit_logger.log_security_event(
-            event_type="UNAUTHORIZED_ROUND_START",
-            username=current_user,
-            success=False,
-            details="Non-admin attempted to start new round",
-            session_id=session_id,
-            role=user_role
-        )
         print("Only admins can start new rounds")
         return False
         
@@ -731,16 +586,6 @@ def start_new_round():
     })
     
     if success:
-        audit_logger.log_event(
-            action="START_NEW_ROUND",
-            username=current_user,
-            role=user_role,
-            session_id=session_id,
-            round_number=data.get('round'),
-            additional_data={
-                "previous_round": current_round
-            }
-        )
         print(f"Round {data.get('round')} started")
         return True
     return False
@@ -905,16 +750,6 @@ def get_round_token():
     return False
 
 def register(username, password):
-    # Log registration attempt
-    audit_logger.log_security_event(
-        event_type="REGISTRATION_ATTEMPT",
-        username=username,
-        success=True,
-        details="Registration attempt",
-        session_id=session_id,
-        role="unregistered"
-    )
-
     public_key, hashed_password = create_account_encryption(username, password)
 
     """Register a new user"""
@@ -929,33 +764,10 @@ def register(username, password):
         # Store the token for the current round
         global current_round_token, current_round
         current_round_token = data.get("token")
-        current_round = data.get("round", 1)
-        
-        # Log successful registration
-        audit_logger.log_security_event(
-            event_type="REGISTRATION_SUCCESS",
-            username=username,
-            success=True,
-            details="Registration successful",
-            session_id=session_id,
-            role="user"
-        )
-        
+        current_round = data.get("round")
         print(f"Got round token for round {current_round}")
         return True
-    else:
-        error_msg = data.get('error', 'Unknown error')
-        # Log failed registration
-        audit_logger.log_security_event(
-            event_type="REGISTRATION_FAILURE",
-            username=username,
-            success=False,
-            details=f"Registration failed: {error_msg}",
-            session_id=session_id,
-            role="unregistered"
-        )
-        print(f"Registration failed: {error_msg}")
-        return False
+    return False
 
 def block_user(username):
     """Block a user from sending messages"""
