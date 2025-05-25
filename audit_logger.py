@@ -2,33 +2,77 @@ import json
 import time
 from datetime import datetime
 from typing import Optional, Dict, Any
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
+import base64
 
 class AuditLogger:
     def __init__(self, log_file: str = "audit_log.json"):
         self.log_file = log_file
+        # Generate or load signing key
+        try:
+            with open('audit_signing_key.pem', 'rb') as f:
+                self.signing_key = serialization.load_pem_private_key(f.read(), password=None)
+        except FileNotFoundError:
+            self.signing_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=2048
+            )
+            # Save the key
+            with open('audit_signing_key.pem', 'wb') as f:
+                f.write(self.signing_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.PKCS8,
+                    encryption_algorithm=serialization.NoEncryption()
+                ))
         self._ensure_log_file_exists()
     
     def _ensure_log_file_exists(self):
-        """Ensure the log file exists and has valid JSON structure"""
+        """Ensure the log file exists"""
         try:
             with open(self.log_file, 'r') as f:
-                json.load(f)
+                # Try to read the file
+                pass
         except FileNotFoundError:
+            # Create new file with empty line
             with open(self.log_file, 'w') as f:
-                json.dump({"logs": []}, f)
-        except json.JSONDecodeError:
-            with open(self.log_file, 'w') as f:
-                json.dump({"logs": []}, f)
+                f.write('')
+    
+    def _sign_entry(self, entry: dict) -> str:
+        """Sign a log entry and return the signature"""
+        # Sort keys to ensure consistent ordering for signing
+        entry_bytes = json.dumps(entry, sort_keys=True).encode()
+        signature = self.signing_key.sign(
+            entry_bytes,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        return base64.b64encode(signature).decode()
+
+    def _append_log(self, log_entry: dict):
+        """Append a single log entry to file"""
+        # Add signature to entry
+        log_entry['signature'] = self._sign_entry(log_entry)
+        
+        # Append to file
+        with open(self.log_file, 'a') as f:
+            f.write(json.dumps(log_entry) + '\n')
     
     def _read_logs(self) -> dict:
-        """Read the current logs from file"""
-        with open(self.log_file, 'r') as f:
-            return json.load(f)
-    
-    def _write_logs(self, logs: dict):
-        """Write logs to file"""
-        with open(self.log_file, 'w') as f:
-            json.dump(logs, f, indent=4)
+        """Read logs and return in backward-compatible format"""
+        logs = []
+        try:
+            with open(self.log_file, 'r') as f:
+                for line in f:
+                    if line.strip():  # Skip empty lines
+                        logs.append(json.loads(line))
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Return empty logs if file doesn't exist or is invalid
+            pass
+        return {"logs": logs}
     
     def log_event(self, 
                   action: str,
@@ -38,18 +82,7 @@ class AuditLogger:
                   token_id: Optional[str] = None,
                   round_number: Optional[int] = None,
                   additional_data: Optional[Dict[str, Any]] = None) -> None:
-        """
-        Log a security event with comprehensive metadata
-        
-        Args:
-            action: The action being performed (e.g., "login", "send_message", etc.)
-            username: The username performing the action
-            role: The role of the user (admin, moderator, user)
-            session_id: Current session ID
-            token_id: Optional round token ID
-            round_number: Optional round number
-            additional_data: Optional dictionary of additional metadata
-        """
+        """Log a security event with comprehensive metadata"""
         timestamp = datetime.now().isoformat()
         unix_timestamp = int(time.time())
         
@@ -67,14 +100,8 @@ class AuditLogger:
             "metadata": additional_data or {}
         }
         
-        # Read current logs
-        logs = self._read_logs()
-        
-        # Append new entry
-        logs["logs"].append(log_entry)
-        
-        # Write back to file
-        self._write_logs(logs)
+        # Append the signed entry
+        self._append_log(log_entry)
     
     def log_security_event(self,
                           event_type: str,
@@ -83,9 +110,7 @@ class AuditLogger:
                           details: str,
                           session_id: str,
                           role: str) -> None:
-        """
-        Log a security-specific event (login attempts, permission changes, etc.)
-        """
+        """Log a security-specific event (login attempts, permission changes, etc.)"""
         self.log_event(
             action=f"SECURITY_{event_type}",
             username=username,
