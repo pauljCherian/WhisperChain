@@ -1,0 +1,38 @@
+{
+    "logs": [
+        {
+            "timestamp": "2025-05-25T14:38:51.094995",
+            "unix_timestamp": 1748198331,
+            "action": "SECURITY_REGISTRATION_ATTEMPT",
+            "username": "test_user",
+            "role": "unregistered",
+            "session_id": "0669ff91-62c6-4998-a00c-68dd23e91ed9",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Registration attempt",
+                "event_type": "REGISTRATION_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-25T14:38:51.291327",
+            "unix_timestamp": 1748198331,
+            "action": "SECURITY_REGISTRATION_FAILURE",
+            "username": "test_user",
+            "role": "unregistered",
+            "session_id": "0669ff91-62c6-4998-a00c-68dd23e91ed9",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Registration failed: Username already exists",
+                "event_type": "REGISTRATION_FAILURE"
+            }
+        }
+    ]
+}

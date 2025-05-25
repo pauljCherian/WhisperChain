@@ -11,6 +11,13 @@ import os
 import base64
 import uuid
 
+from audit_logger import AuditLogger
+# from crypto_utils import *
+
+
+# Initialize audit logger
+audit_logger = AuditLogger("server_audit.json")
+
 def generate_token():
     """Generate a random token"""
     return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -110,74 +117,157 @@ def block_user(username):
 
 def handle_client(conn, address):
     """Handle client connection"""
-    print(f"New connection from {address}")
+    client_session_id = str(uuid.uuid4())
     
-    while True:
-        try:
-            # Receive message
-            raw_data = conn.recv(1024).decode()
-            print(f"\n=== Server Received ===")
-            print(f"Raw data: {raw_data}")
-            print(f"Data type: {type(raw_data)}")
-            print("=====================\n")
-            
-            if not raw_data:
-                print("No data received, closing connection")
-                break
-                
-            # Parse message
+    # Log new connection
+    audit_logger.log_security_event(
+        event_type="CLIENT_CONNECT",
+        username="unknown",
+        success=True,
+        details=f"New client connection from {address[0]}",
+        session_id=client_session_id,
+        role="unknown"
+    )
+    
+    try:
+        while True:
             try:
-                message_type, message_data = parse_message(raw_data)
-                print("\n=== Parsed Message ===")
-                print(f"Message type: {message_type}")
-                print(f"Message data: {message_data}")
+                # Receive message
+                raw_data = conn.recv(1024).decode()
+                if not raw_data:
+                    break
+                    
+                print(f"\n=== Server Received ===")
+                print(f"Raw data: {raw_data}")
                 print("=====================\n")
-            except Exception as e:
-                print(f"Error parsing message: {str(e)}")
-                response = create_message("ERROR", {"error": "Invalid message format"})
-                conn.send(response.encode())
-                continue
-            
-            if not message_type:
-                print("Error: Invalid message format")
-                response = create_message("ERROR", {"error": "Invalid message format"})
-                conn.send(response.encode())
-                continue
-            
-            # Handle message based on type
-            try:
-                # Set timeout only for long-running operations
-                if message_type in [MESSAGE_TYPES["FLAG_MESSAGE"], MESSAGE_TYPES["SEND_MESSAGE"]]:
-                    conn.settimeout(10)  # 10 second timeout for these operations
-                else:
-                    conn.settimeout(None)  # No timeout for other operations
                 
-                if message_type == MESSAGE_TYPES["LOGIN"]:
+                # Parse message
+                message_type, message_data = parse_message(raw_data)
+                if not message_type:
+                    response = create_message("ERROR", {"error": "Invalid message format"})
+                    conn.send(response.encode())
+                    continue
+                
+                # Handle message based on type
+                if message_type == "REGISTER":
                     username = message_data.get("username")
                     password = message_data.get("password")
                     
+                    audit_logger.log_security_event(
+                        event_type="REGISTRATION_ATTEMPT",
+                        username=username,
+                        success=False,
+                        details=f"Registration attempt from {address[0]}",
+                        session_id=client_session_id,
+                        role="unregistered"
+                    )
+                    
+                    if username == "admin":
+                        response = create_message("ERROR", {"error": "Cannot register as admin"})
+                    elif username in data["users"]:
+                        response = create_message("ERROR", {"error": "Username already exists"})
+                    elif username and password:
+                        data["users"][username] = {
+                            "password": password,
+                            "role": "user",
+                            "is_banned": False,
+                            "anonymous_id": generate_anonymous_id()
+                        }
+                        
+                        audit_logger.log_security_event(
+                            event_type="REGISTRATION_SUCCESS",
+                            username=username,
+                            success=True,
+                            details=f"New user registered from {address[0]}",
+                            session_id=client_session_id,
+                            role="user"
+                        )
+                        
+                        current_round = str(data["current_round"])
+                        if current_round not in data["round_tokens"]:
+                            data["round_tokens"][current_round] = {}
+                        
+                        while True:
+                            new_token = generate_token()
+                            if new_token not in data["used_tokens"] and new_token not in data["banned_tokens"]:
+                                data["round_tokens"][current_round][username] = new_token
+                                break
+                        
+                        save_data(data)
+                        response = create_message("SUCCESS", {
+                            "message": "Registration successful",
+                            "token": data["round_tokens"][current_round][username],
+                            "round": data["current_round"]
+                        })
+                    else:
+                        response = create_message("ERROR", {"error": "Missing username or password"})
+                    
+                elif message_type == "LOGIN":
+                    username = message_data.get("username")
+                    password = message_data.get("password")
+                    
+                    audit_logger.log_security_event(
+                        event_type="LOGIN_ATTEMPT",
+                        username=username,
+                        success=False,
+                        details=f"Login attempt from {address[0]}",
+                        session_id=client_session_id,
+                        role="unknown"
+                    )
+                    
                     print(f"\n=== Login Attempt ===")
                     print(f"Username: {username}")
-                    print(f"Password: {password}")
                     print(f"User exists: {username in data['users']}")
                     if username in data["users"]:
                         print(f"Password matches: {data['users'][username]['password'] == password}")
                     print("=====================\n")
                     
-                    if username in data["users"] and data["users"][username]["password"] == password:
+                    if username == "admin" and password == "admin123":
+                        # Special case for admin
+                        audit_logger.log_security_event(
+                            event_type="ADMIN_LOGIN",
+                            username=username,
+                            success=True,
+                            details=f"Admin login from IP {address[0]}",
+                            session_id=client_session_id,
+                            role="admin"
+                        )
+                        if "admin" not in data["users"]:
+                            data["users"]["admin"] = {
+                                "password": "admin123",
+                                "role": "admin",
+                                "anonymous_id": generate_anonymous_id()
+                            }
+                            save_data(data)
+                        response = create_message("SUCCESS", {
+                            "message": "Login successful",
+                            "role": "admin",
+                            "anonymous_id": data["users"]["admin"]["anonymous_id"]
+                        })
+                    elif username in data["users"] and data["users"][username]["password"] == password:
                         # Generate anonymous ID if user doesn't have one
                         if "anonymous_id" not in data["users"][username]:
                             data["users"][username]["anonymous_id"] = generate_anonymous_id()
                             save_data(data)
                         
+                        user_role = data["users"][username]["role"]
+                        audit_logger.log_security_event(
+                            event_type="LOGIN_SUCCESS",
+                            username=username,
+                            success=True,
+                            details=f"User login from IP {address[0]}",
+                            session_id=client_session_id,
+                            role=user_role
+                        )
                         response = create_message("SUCCESS", {
                             "message": "Login successful",
-                            "role": data["users"][username]["role"],
+                            "role": user_role,
                             "anonymous_id": data["users"][username]["anonymous_id"]
                         })
                     else:
                         response = create_message("ERROR", {"error": "Invalid username or password"})
-                    
+                    conn.settimeout(None)  # No timeout for other operations
+                
                 elif message_type == MESSAGE_TYPES["GET_TOKEN"]:
                     username = message_data.get("username")
                     current_round = str(data["current_round"])
@@ -206,84 +296,93 @@ def handle_client(conn, address):
                     else:
                         response = create_message("ERROR", {"error": "User not found"})
                     
-                elif message_type == MESSAGE_TYPES["SEND_MESSAGE"]:
-                    sender = message_data.get("sender")
-                    recipient = message_data.get("recipient")
-                    content = message_data.get("content")
-                    round_token = message_data.get("token")
-                    current_round = str(data["current_round"])
-                    
-                    print(f"\n=== Sending Message ===")
-                    print(f"Sender: {sender}")
-                    print(f"Recipient: {recipient}")
-                    print(f"Round: {current_round}")
-                    print(f"Token: {round_token}")
-                    print("=====================\n")
-                    
-                    # Check if sender is admin (admins can't send messages)
-                    if data["users"][sender]["role"] == "admin":
-                        response = create_message("ERROR", {"error": "Admins cannot send messages"})
-                    # Check if sender is banned
-                    elif data["users"][sender].get("is_banned", False):
-                        response = create_message("ERROR", {"error": "You are banned from sending messages"})
-                    # Check if round exists in tokens
-                    elif current_round not in data["round_tokens"]:
-                        response = create_message("ERROR", {"error": "Invalid round"})
-                    # Check if token is valid for this round
-                    elif round_token not in data["round_tokens"][current_round].values():
-                        response = create_message("ERROR", {"error": "Invalid token"})
-                    # Check if token is banned
-                    elif round_token in data["banned_tokens"]:
-                        response = create_message("ERROR", {"error": "This token has been banned"})
-                    # Check if token has already been used
-                    elif round_token in data["used_tokens"]:
-                        response = create_message("ERROR", {"error": "This token has already been used"})
-                    elif all([sender, recipient, content, round_token]):
-                        try:
-                            # Initialize encrypted_inboxes if it doesn't exist
-                            if "encrypted_inboxes" not in data:
-                                data["encrypted_inboxes"] = {}
+                elif message_type == "SEND_MESSAGE":
+                    try:
+                        # Set timeout only for long-running operations
+                        conn.settimeout(10)  # 10 second timeout for these operations
+                        sender = message_data.get("sender")
+                        recipient = message_data.get("recipient")
+                        content = message_data.get("content")
+                        round_token = message_data.get("token")
+                        
+                        # Add audit log only for the attempt
+                        audit_logger.log_event(
+                            action="MESSAGE_ATTEMPT",
+                            username=sender,
+                            role=data["users"][sender]["role"] if sender in data["users"] else "unknown",
+                            session_id=client_session_id,
+                            token_id=round_token,
+                            round_number=data["current_round"]
+                        )
+                        
+                        # Check if sender is admin (admins can't send messages)
+                        if data["users"][sender]["role"] == "admin":
+                            response = create_message("ERROR", {"error": "Admins cannot send messages"})
+                        # Check if sender is banned
+                        elif data["users"][sender].get("is_banned", False):
+                            response = create_message("ERROR", {"error": "You are banned from sending messages"})
+                        # Check if round exists in tokens
+                        elif current_round not in data["round_tokens"]:
+                            response = create_message("ERROR", {"error": "Invalid round"})
+                        # Check if token is valid for this round
+                        elif round_token not in data["round_tokens"][current_round].values():
+                            response = create_message("ERROR", {"error": "Invalid token"})
+                        # Check if token is banned
+                        elif round_token in data["banned_tokens"]:
+                            response = create_message("ERROR", {"error": "This token has been banned"})
+                        # Check if token has already been used
+                        elif round_token in data["used_tokens"]:
+                            response = create_message("ERROR", {"error": "This token has already been used"})
+                        elif all([sender, recipient, content, round_token]):
+                            try:
+                                # Initialize encrypted_inboxes if it doesn't exist
+                                if "encrypted_inboxes" not in data:
+                                    data["encrypted_inboxes"] = {}
+                                    
+                                # Initialize recipient's inbox if it doesn't exist
+                                if recipient not in data["encrypted_inboxes"]:
+                                    data["encrypted_inboxes"][recipient] = {}
                                 
-                            # Initialize recipient's inbox if it doesn't exist
-                            if recipient not in data["encrypted_inboxes"]:
-                                data["encrypted_inboxes"][recipient] = {}
-                            
-                            # Initialize round in recipient's inbox if it doesn't exist
-                            if current_round not in data["encrypted_inboxes"][recipient]:
-                                data["encrypted_inboxes"][recipient][current_round] = []
-                            
-                            # Generate a unique message ID
-                            message_id = f"msg{int(time.time())}"
-                            
-                            # Create message data
-                            message_data = {
-                                "id": message_id,
-                                "message_id": message_id,
-                                "sender": sender,
-                                "sender_anonymous_id": data["users"][sender]["anonymous_id"],
-                                "content": content,
-                                "timestamp": datetime.now().isoformat(),
-                                "is_flagged": False,
-                                "round": current_round,
-                                "round_token": round_token
-                            }
-                            
-                            # Add message to recipient's encrypted inbox
-                            data["encrypted_inboxes"][recipient][current_round].append(message_data)
-                            
-                            # Mark token as used
-                            data["used_tokens"].append(round_token)
-                            save_data(data)
-                            
-                            print(f"Message stored successfully in round {current_round}")
-                            print(f"Message ID: {message_id}")
-                            response = create_message("SUCCESS", {"message": "Message sent", "message_id": message_id})
-                        except Exception as e:
-                            print(f"Error storing message: {str(e)}")
-                            response = create_message("ERROR", {"error": f"Failed to send message: {str(e)}"})
-                    else:
-                        response = create_message("ERROR", {"error": "Missing required fields"})
-                    
+                                # Initialize round in recipient's inbox if it doesn't exist
+                                if current_round not in data["encrypted_inboxes"][recipient]:
+                                    data["encrypted_inboxes"][recipient][current_round] = []
+                                
+                                # Generate a unique message ID
+                                message_id = f"msg{int(time.time())}"
+                                
+                                # Create message data
+                                message_data = {
+                                    "id": message_id,
+                                    "message_id": message_id,
+                                    "sender": sender,
+                                    "sender_anonymous_id": data["users"][sender]["anonymous_id"],
+                                    "content": content,
+                                    "timestamp": datetime.now().isoformat(),
+                                    "is_flagged": False,
+                                    "round": current_round,
+                                    "round_token": round_token
+                                }
+                                
+                                # Add message to recipient's encrypted inbox
+                                data["encrypted_inboxes"][recipient][current_round].append(message_data)
+                                
+                                # Mark token as used
+                                data["used_tokens"].append(round_token)
+                                save_data(data)
+                                
+                                print(f"Message stored successfully in round {current_round}")
+                                print(f"Message ID: {message_id}")
+                                response = create_message("SUCCESS", {"message": "Message sent", "message_id": message_id})
+                            except Exception as e:
+                                print(f"Error storing message: {str(e)}")
+                                response = create_message("ERROR", {"error": f"Failed to send message: {str(e)}"})
+                        else:
+                            response = create_message("ERROR", {"error": "Missing required fields"})
+                        
+                    except Exception as e:
+                        print(f"Error in send_message handler: {str(e)}")
+                        response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
+
                 elif message_type == MESSAGE_TYPES["REQUEST_MESSAGES"]:
                     username = message_data.get("username")
                     round_number = message_data.get("round_number")
@@ -318,13 +417,15 @@ def handle_client(conn, address):
                         message_id = message_data.get("message_id")
                         reason = message_data.get("reason")
                         
-                        print(f"\n=== FLAG_MESSAGE Request ===")
-                        print(f"Username: {username}")
-                        print(f"Message ID: {message_id}")
-                        print(f"Reason: {reason}")
-                        print("========================\n")
+                        # Add audit log for flag attempt
+                        audit_logger.log_event(
+                            action="FLAG_MESSAGE_ATTEMPT",
+                            username=username,
+                            role=data["users"][username]["role"] if username in data["users"] else "unknown",
+                            session_id=client_session_id,
+                            additional_data={"message_id": message_id}
+                        )
                         
-                        # Validate request
                         if not all([username, message_id, reason]):
                             print("Missing required fields")
                             response = create_message("ERROR", {"error": "Missing required fields"})
@@ -397,32 +498,28 @@ def handle_client(conn, address):
                     except Exception as e:
                         print(f"Error in FLAG_MESSAGE handler: {str(e)}")
                         response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
-                    
+
                 elif message_type == MESSAGE_TYPES["GET_FLAGGED_MESSAGES"]:
-                    try:
-                        username = message_data.get("username")
-                        
-                        print(f"\n=== GET_FLAGGED_MESSAGES Request ===")
-                        print(f"Username: {username}")
-                        print(f"Current flagged messages: {json.dumps(data['flagged_messages'], indent=2)}")
-                        print("===============================\n")
-                        
-                        if not username or username not in data["users"]:
-                            response = create_message("ERROR", {"error": "Invalid user"})
-                        elif data["users"][username]["role"] != "moderator":
-                            response = create_message("ERROR", {"error": "Unauthorized - not a moderator"})
-                        else:
-                            # Get all flagged messages
-                            flagged_messages = data.get("flagged_messages", {})
-                            
-                            print(f"Sending response with {len(flagged_messages)} flagged messages")
-                            response = create_message("SUCCESS", {
-                                "flagged_messages": flagged_messages
-                            })
+                    username = message_data.get("username")
                     
-                    except Exception as e:
-                        print(f"Error in GET_FLAGGED_MESSAGES handler: {str(e)}")
-                        response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
+                    if username and data["users"][username]["role"] == "moderator":
+                        flagged_messages = []
+                        for msg_id, flag_data in data["flagged_messages"].items():
+                            # Find the original message
+                            for user_messages in data["messages"].values():
+                                for msg in user_messages:
+                                    if msg["id"] == msg_id:
+                                        flagged_messages.append({
+                                            **msg,
+                                            "flag_data": flag_data
+                                        })
+                                        break
+                        
+                        response = create_message("SUCCESS", {
+                            "flagged_messages": flagged_messages
+                        })
+                    else:
+                        response = create_message("ERROR", {"error": "Unauthorized"})
                     
                 elif message_type == MESSAGE_TYPES["BAN_TOKEN"]:
                     moderator = message_data.get("moderator")
@@ -441,18 +538,30 @@ def handle_client(conn, address):
                 elif message_type == MESSAGE_TYPES["NEXT_ROUND"]:
                     username = message_data.get("username")
                     
+                    # Add audit log for round change attempt
+                    audit_logger.log_event(
+                        action="ROUND_CHANGE_ATTEMPT",
+                        username=username,
+                        role=data["users"][username]["role"] if username in data["users"] else "unknown",
+                        session_id=client_session_id,
+                        round_number=data["current_round"]
+                    )
+                    
                     if username and data["users"][username]["role"] == "admin":
                         data["current_round"] += 1
                         data["round_tokens"][str(data["current_round"])] = {}
-                        # Clear all messages for the new round
-                        #data["messages"] = {}
-                        # Clear flagged messages as well
-                        #data["flagged_messages"] = {}
-                        # Clear used tokens for the new round
-                        data["used_tokens"] = []
                         # Don't clear encrypted inboxes - they persist across rounds
-                        
                         save_data(data)
+                        
+                        # Add audit log for successful round change
+                        audit_logger.log_event(
+                            action="ROUND_CHANGE_SUCCESS",
+                            username=username,
+                            role="admin",
+                            session_id=client_session_id,
+                            round_number=data["current_round"]
+                        )
+                        
                         response = create_message("SUCCESS", {
                             "message": f"Round {data['current_round']} started",
                             "round": data["current_round"]
@@ -460,8 +569,6 @@ def handle_client(conn, address):
                     else:
                         response = create_message("ERROR", {"error": "Unauthorized"})
                     
-            
-
                 elif message_type == MESSAGE_TYPES["MODERATOR_QUEUE"]:
                     try:
                         username = message_data.get("username")
@@ -581,7 +688,7 @@ def handle_client(conn, address):
                                         "message_id": message_id,
                                         "blocked_token": sender_token
                                     })
-                        
+                    
                     except Exception as e:
                         print(f"Error in BLOCK_MESSAGE handler: {str(e)}")
                         print(f"Error type: {type(e)}")
@@ -686,6 +793,83 @@ def handle_client(conn, address):
                     else:
                         response = create_message("ERROR", {"error": "User not found"})
                     
+                elif message_type == MESSAGE_TYPES["REVIEW_MESSAGE"]:
+                    try:
+                        message_id = message_data.get("message_id")
+                        action = message_data.get("action")
+                        username = message_data.get("username")
+                        
+                        if not all([message_id, action, username]):
+                            response = create_message("ERROR", {"error": "Missing required fields"})
+                        elif username not in data["users"]:
+                            response = create_message("ERROR", {"error": "Invalid user"})
+                        else:
+                            # Add audit logging
+                            audit_logger.log_event(
+                                action="MESSAGE_REVIEW",
+                                username=username,
+                                role=data["users"][username]["role"] if username in data["users"] else "unknown",
+                                session_id=client_session_id,
+                                additional_data={"message_id": message_id, "action": action}
+                            )
+                            
+                            # Process the review based on action
+                            if action == "approve":
+                                # Handle approval logic
+                                response = create_message("SUCCESS", {
+                                    "message": "Message approved",
+                                    "message_id": message_id
+                                })
+                            elif action == "reject":
+                                # Handle rejection logic
+                                response = create_message("SUCCESS", {
+                                    "message": "Message rejected",
+                                    "message_id": message_id
+                                })
+                            else:
+                                response = create_message("ERROR", {"error": "Invalid action"})
+                            
+                    except Exception as e:
+                        print(f"Error in REVIEW_MESSAGE handler: {str(e)}")
+                        response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
+                    
+                elif message_type == MESSAGE_TYPES["APPOINT_MODERATOR"]:
+                    admin = message_data.get("admin")
+                    target_user = message_data.get("target_user")
+                    
+                    audit_logger.log_security_event(
+                        event_type="MODERATOR_APPOINTMENT_ATTEMPT",
+                        username=admin,
+                        success=False,
+                        details=f"Attempt to appoint {target_user} as moderator",
+                        session_id=client_session_id,
+                        role=data["users"].get(admin, {}).get("role", "unknown")
+                    )
+                    
+                    if admin and target_user and data["users"][admin]["role"] == "admin":
+                        if target_user in data["users"]:
+                            if data["users"][target_user]["role"] != "admin":
+                                data["users"][target_user]["role"] = "moderator"
+                                save_data(data)
+                                response = create_message("SUCCESS", {
+                                    "message": f"User {target_user} is now a moderator"
+                                })
+                                
+                                audit_logger.log_security_event(
+                                    event_type="MODERATOR_APPOINTMENT_SUCCESS",
+                                    username=admin,
+                                    success=True,
+                                    details=f"Successfully appointed {target_user} as moderator",
+                                    session_id=client_session_id,
+                                    role="admin"
+                                )
+                            else:
+                                response = create_message("ERROR", {"error": "Cannot change admin roles"})
+                        else:
+                            response = create_message("ERROR", {"error": "Target user not found"})
+                    else:
+                        response = create_message("ERROR", {"error": "Unauthorized or missing fields"})
+                
                 else:
                     print(f"Unknown message type: {message_type}")
                     response = create_message("ERROR", {"error": f"Unknown message type: {message_type}"})
@@ -706,56 +890,91 @@ def handle_client(conn, address):
                     conn.send(response.encode())
                 except:
                     pass
-                break
             except Exception as e:
                 print(f"Error handling message: {str(e)}")
-                print(f"Exception type: {type(e)}")
                 response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
                 try:
                     conn.send(response.encode())
                 except:
                     print("Failed to send error response")
-                break
-            
-        except ConnectionResetError:
-            print(f"Connection reset by {address}")
-            break
-        except Exception as e:
-            print(f"\n=== Error ===")
-            print(f"Error handling client {address}: {str(e)}")
-            print("=============\n")
-            break
-    
-    print(f"Connection from {address} closed")
-    try:
+                    
+    except Exception as e:
+        print(f"Error handling client {address}: {str(e)}")
+        audit_logger.log_security_event(
+            event_type="CLIENT_ERROR",
+            username="unknown",
+            success=False,
+            details=f"Error handling client: {str(e)}",
+            session_id=client_session_id,
+            role="unknown"
+        )
+    finally:
+        # Log disconnection
+        audit_logger.log_security_event(
+            event_type="CLIENT_DISCONNECT",
+            username="unknown",
+            success=True,
+            details=f"Client disconnected from {address[0]}",
+            session_id=client_session_id,
+            role="unknown"
+        )
         conn.close()
-    except:
-        pass
 
 def main():
+    """Main function to start the server"""
+    global server_socket
+    
     host = socket.gethostname()
-    port = 5001
+    base_port = 5001
+    max_port_attempts = 10
     
-    server_socket = socket.socket()
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Allow port reuse
-    server_socket.bind((host, port)) 
-    server_socket.listen(5)
+    print("Starting WhisperChain server...")
     
-    print(f"Server started on {host}:{port}")
-    print("\n=== Available Users ===")
-    for username, user_data in data["users"].items():
-        print(f"Username: {username}, Password: {user_data['password']}, Role: {user_data['role']}")
-    print("=====================\n")
+    # Log server startup
+    audit_logger.log_security_event(
+        event_type="SERVER_START",
+        username="system",
+        success=True,
+        details="Server starting up",
+        session_id=str(uuid.uuid4()),
+        role="system"
+    )
     
-    while True:
+    # Try different ports if the default one is in use
+    for port in range(base_port, base_port + max_port_attempts):
         try:
-            conn, address = server_socket.accept()
-            client_thread = threading.Thread(target=handle_client, args=(conn, address))
-            client_thread.daemon = True  # Make thread daemon so it exits when main thread exits
+            server_socket = socket.socket()
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind((host, port))
+            server_socket.listen(5)
+            print(f"Server started successfully on port {port}")
+            print(f"Waiting for clients on {host}:{port}...")
+            break
+        except OSError as e:
+            if e.errno == 48:  # Address already in use
+                print(f"Port {port} is already in use, trying next port...")
+                continue
+            else:
+                print(f"Error starting server: {e}")
+                return
+    
+    try:
+        while True:
+            client_socket, address = server_socket.accept()
+            print(f"Connection from: {str(address)}")
+            # Create a new thread for each client
+            client_thread = threading.Thread(
+                target=handle_client,
+                args=(client_socket, address)
+            )
+            client_thread.daemon = True
             client_thread.start()
-        except Exception as e:
-            print(f"Error accepting connection: {str(e)}")
-            continue
+    except KeyboardInterrupt:
+        print("\nServer shutting down...")
+    finally:
+        if server_socket:
+            server_socket.close()
+            print("Server socket closed.")
 
 if __name__ == "__main__":
     main()

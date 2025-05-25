@@ -1,0 +1,55 @@
+{
+    "logs": [
+        {
+            "timestamp": "2025-05-25T14:38:51.289775",
+            "unix_timestamp": 1748198331,
+            "action": "SECURITY_CLIENT_CONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "5f79c998-28bb-4294-9b28-86ac617f9e2c",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "New client connection from 127.0.0.1",
+                "event_type": "CLIENT_CONNECT"
+            }
+        },
+        {
+            "timestamp": "2025-05-25T14:38:51.290306",
+            "unix_timestamp": 1748198331,
+            "action": "SECURITY_REGISTRATION_ATTEMPT",
+            "username": "test_user",
+            "role": "unregistered",
+            "session_id": "5f79c998-28bb-4294-9b28-86ac617f9e2c",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": false,
+                "details": "Registration attempt from 127.0.0.1",
+                "event_type": "REGISTRATION_ATTEMPT"
+            }
+        },
+        {
+            "timestamp": "2025-05-25T14:38:51.291347",
+            "unix_timestamp": 1748198331,
+            "action": "SECURITY_CLIENT_DISCONNECT",
+            "username": "unknown",
+            "role": "unknown",
+            "session_id": "5f79c998-28bb-4294-9b28-86ac617f9e2c",
+            "token_id": null,
+            "round_number": null,
+            "ip_address": null,
+            "success": true,
+            "metadata": {
+                "success": true,
+                "details": "Client disconnected from 127.0.0.1",
+                "event_type": "CLIENT_DISCONNECT"
+            }
+        }
+    ]
+}
