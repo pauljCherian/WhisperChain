@@ -19,7 +19,7 @@
         "user2": {
             "password": "user123",
             "role": "user",
-            "is_banned": false,
+            "is_banned": true,
             "anonymous_id": "anon_def456"
         },
         "paul": {
@@ -39,40 +39,19 @@
         "2": {
             "paul": "zWBfZFo31v81noly",
             "moderator1": "WxswLDClG8YM2OK9",
-            "user1": "daHjzAzPxgTLCXVZ"
+            "user1": "daHjzAzPxgTLCXVZ",
+            "user2": "Baq7dCfPnMtqcpEk"
         }
     },
     "used_tokens": [
         "zWBfZFo31v81noly",
         "daHjzAzPxgTLCXVZ"
     ],
-    "banned_tokens": [],
+    "banned_tokens": [
+        "daHjzAzPxgTLCXVZ"
+    ],
     "messages": {},
-    "flagged_messages": {
-        "msg1748108794": {
-            "message_id": "msg1748108794",
-            "reason": "earg",
-            "content": "hi paul",
-            "sender": "user1",
-            "sender_anonymous_id": "anon_abc123",
-            "timestamp": "2025-05-24T14:07:28.681709",
-            "flagged_by": "paul",
-            "round": "2",
-            "round_token": "daHjzAzPxgTLCXVZ",
-            "recipient": "paul",
-            "original_message": {
-                "id": "msg1748108794",
-                "message_id": "msg1748108794",
-                "sender": "user1",
-                "sender_anonymous_id": "anon_abc123",
-                "content": "hi paul",
-                "timestamp": "2025-05-24T13:46:34.074130",
-                "is_flagged": false,
-                "round": "2",
-                "round_token": "daHjzAzPxgTLCXVZ"
-            }
-        }
-    },
+    "flagged_messages": {},
     "moderator_queue": [],
     "encrypted_inboxes": {
         "user1": {

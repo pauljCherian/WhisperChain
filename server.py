@@ -96,6 +96,18 @@ def get_moderator_queue():
         print(f"Error getting moderator queue: {str(e)}")
         return []
 
+def block_user(username):
+    """Block a user from sending messages"""
+    try:
+        if username in data["users"]:
+            data["users"][username]["is_banned"] = True
+            save_data(data)
+            return True
+        return False
+    except Exception as e:
+        print(f"Error blocking user: {str(e)}")
+        return False
+
 def handle_client(conn, address):
     """Handle client connection"""
     print(f"New connection from {address}")
@@ -316,91 +328,76 @@ def handle_client(conn, address):
                         if not all([username, message_id, reason]):
                             print("Missing required fields")
                             response = create_message("ERROR", {"error": "Missing required fields"})
-                            conn.send(response.encode())
-                            return
-                            
-                        if username not in data["users"]:
+                        elif username not in data["users"]:
                             print(f"Invalid user: {username}")
                             response = create_message("ERROR", {"error": "Invalid user"})
-                            conn.send(response.encode())
-                            return
-                        
-                        # Find the message in encrypted inboxes
-                        message_found = False
-                        flagged_msg = None
-                        recipient = None
-                        
-                        print("Searching for message in encrypted inboxes...")
-                        print(f"Current encrypted_inboxes: {json.dumps(data['encrypted_inboxes'], indent=2)}")
-                        
-                        for rec, inbox in data["encrypted_inboxes"].items():
-                            print(f"Checking recipient: {rec}")
-                            for round_num, messages in inbox.items():
-                                print(f"Checking round: {round_num}")
-                                for msg in messages:
-                                    print(f"Checking message ID: {msg.get('id')} against {message_id}")
-                                    if str(msg.get("id")) == str(message_id) or str(msg.get("message_id")) == str(message_id):
-                                        message_found = True
-                                        flagged_msg = msg
-                                        recipient = rec
-                                        print(f"Found message: {msg}")
+                        else:
+                            # Find the message in encrypted inboxes
+                            message_found = False
+                            flagged_msg = None
+                            recipient = None
+                            
+                            print("Searching for message in encrypted inboxes...")
+                            print(f"Current encrypted_inboxes: {json.dumps(data['encrypted_inboxes'], indent=2)}")
+                            
+                            for rec, inbox in data["encrypted_inboxes"].items():
+                                print(f"Checking recipient: {rec}")
+                                for round_num, messages in inbox.items():
+                                    print(f"Checking round: {round_num}")
+                                    for msg in messages:
+                                        print(f"Checking message ID: {msg.get('id')} against {message_id}")
+                                        if str(msg.get("id")) == str(message_id) or str(msg.get("message_id")) == str(message_id):
+                                            message_found = True
+                                            flagged_msg = msg
+                                            recipient = rec
+                                            print(f"Found message: {msg}")
+                                            break
+                                    if message_found:
                                         break
                                 if message_found:
                                     break
-                            if message_found:
-                                break
-                        
-                        if not message_found or not flagged_msg:
-                            print("Message not found in any inbox")
-                            response = create_message("ERROR", {"error": "Message not found"})
-                            conn.send(response.encode())
-                            return
-                        
-                        # Create flag entry with all message data
-                        flag_entry = {
-                            "message_id": flagged_msg.get("id") or flagged_msg.get("message_id"),
-                            "reason": reason,
-                            "content": flagged_msg["content"],
-                            "sender": flagged_msg.get("sender"),
-                            "sender_anonymous_id": flagged_msg["sender_anonymous_id"],
-                            "timestamp": datetime.now().isoformat(),
-                            "flagged_by": username,
-                            "round": flagged_msg.get("round"),
-                            "round_token": flagged_msg.get("round_token"),
-                            "recipient": recipient,
-                            "original_message": flagged_msg
-                        }
-                        
-                        print(f"Created flag entry: {json.dumps(flag_entry, indent=2)}")
-                        
-                        # Initialize flagged_messages as a dictionary if it doesn't exist
-                        if "flagged_messages" not in data:
-                            print("Initializing flagged_messages dictionary")
-                            data["flagged_messages"] = {}
-                        
-                        # Add to dictionary using message_id as key
-                        data["flagged_messages"][str(message_id)] = flag_entry
-                        print(f"Added to flagged_messages. Current dictionary: {json.dumps(data['flagged_messages'], indent=2)}")
-                        
-                        # Save to data.json
-                        save_data(data)
-                        print("Saved data to data.json")
-                        
-                        print(f"Message added to flagged_messages: {flag_entry}")
-                        response = create_message("SUCCESS", {"message": "Message flagged successfully"})
-                        
+                            
+                            if not message_found or not flagged_msg:
+                                print("Message not found in any inbox")
+                                response = create_message("ERROR", {"error": "Message not found"})
+                            else:
+                                # Create flag entry with all message data
+                                flag_entry = {
+                                    "message_id": flagged_msg.get("id") or flagged_msg.get("message_id"),
+                                    "reason": reason,
+                                    "content": flagged_msg["content"],
+                                    "sender": flagged_msg.get("sender"),
+                                    "sender_anonymous_id": flagged_msg["sender_anonymous_id"],
+                                    "timestamp": datetime.now().isoformat(),
+                                    "flagged_by": username,
+                                    "round": flagged_msg.get("round"),
+                                    "round_token": flagged_msg.get("round_token"),
+                                    "recipient": recipient,
+                                    "original_message": flagged_msg
+                                }
+                                
+                                print(f"Created flag entry: {json.dumps(flag_entry, indent=2)}")
+                                
+                                # Initialize flagged_messages as a dictionary if it doesn't exist
+                                if "flagged_messages" not in data:
+                                    print("Initializing flagged_messages dictionary")
+                                    data["flagged_messages"] = {}
+                                
+                                # Add to dictionary using message_id as key
+                                data["flagged_messages"][str(message_id)] = flag_entry
+                                print(f"Added to flagged_messages. Current dictionary: {json.dumps(data['flagged_messages'], indent=2)}")
+                                
+                                # Save to data.json
+                                save_data(data)
+                                print("Saved data to data.json")
+                                
+                                print(f"Message added to flagged_messages: {flag_entry}")
+                                response = create_message("SUCCESS", {"message": "Message flagged successfully"})
+                    
                     except Exception as e:
                         print(f"Error in FLAG_MESSAGE handler: {str(e)}")
                         response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
                     
-                    print(f"Sending response: {response}")
-                    try:
-                        conn.send(response.encode())
-                        print("Response sent successfully")
-                    except Exception as e:
-                        print(f"Error sending response: {str(e)}")
-                    return
-
                 elif message_type == MESSAGE_TYPES["GET_FLAGGED_MESSAGES"]:
                     try:
                         username = message_data.get("username")
@@ -412,34 +409,21 @@ def handle_client(conn, address):
                         
                         if not username or username not in data["users"]:
                             response = create_message("ERROR", {"error": "Invalid user"})
-                            conn.send(response.encode())
-                            return
-                            
-                        if data["users"][username]["role"] != "moderator":
+                        elif data["users"][username]["role"] != "moderator":
                             response = create_message("ERROR", {"error": "Unauthorized - not a moderator"})
-                            conn.send(response.encode())
-                            return
-                        
-                        # Get all flagged messages
-                        flagged_messages = data.get("flagged_messages", {})
-                        
-                        print(f"Sending response with {len(flagged_messages)} flagged messages")
-                        response = create_message("SUCCESS", {
-                            "flagged_messages": flagged_messages
-                        })
-                        
+                        else:
+                            # Get all flagged messages
+                            flagged_messages = data.get("flagged_messages", {})
+                            
+                            print(f"Sending response with {len(flagged_messages)} flagged messages")
+                            response = create_message("SUCCESS", {
+                                "flagged_messages": flagged_messages
+                            })
+                    
                     except Exception as e:
                         print(f"Error in GET_FLAGGED_MESSAGES handler: {str(e)}")
                         response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
                     
-                    try:
-                        print(f"Sending response: {response}")
-                        conn.send(response.encode())
-                        print("Response sent successfully")
-                    except Exception as e:
-                        print(f"Error sending response: {str(e)}")
-                    return
-
                 elif message_type == MESSAGE_TYPES["BAN_TOKEN"]:
                     moderator = message_data.get("moderator")
                     token = message_data.get("token")
@@ -483,77 +467,70 @@ def handle_client(conn, address):
                         username = message_data.get("username")
                         if not username or username not in data["users"]:
                             response = create_message("ERROR", {"error": "Invalid user"})
-                            conn.send(response.encode())
-                            return
-                            
-                        if data["users"][username]["role"] != "moderator":
+                        elif data["users"][username]["role"] != "moderator":
                             response = create_message("ERROR", {"error": "Unauthorized - not a moderator"})
-                            conn.send(response.encode())
-                            return
-                        
-                        queue = get_moderator_queue()
-                        response = create_message("SUCCESS", {"messages": queue})
+                        else:
+                            queue = get_moderator_queue()
+                            response = create_message("SUCCESS", {"messages": queue})
                         
                     except Exception as e:
                         print(f"Error in MODERATOR_QUEUE handler: {str(e)}")
                         response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
                     
-                    conn.send(response.encode())
-                    return
-
                 elif message_type == MESSAGE_TYPES["IGNORE_MESSAGE"]:
                     try:
                         message_id = message_data.get("message_id")
                         
-                        
                         print(f"\n=== Ignore Message Request ===")
                         print(f"Message ID: {message_id}")
-                        print(f"Moderator: {username}")
+                        print(f"Message ID type: {type(message_id)}")
                         print(f"Current flagged messages: {json.dumps(data['flagged_messages'], indent=2)}")
                         print("===========================\n")
                         
                         # Validate required fields
                         if not message_id:
-                            response = create_message("ERROR", {"error": "Missing required fields"})
-                            conn.send(response.encode())
-                            return
+                            print("Error: Missing message ID")
+                            response = create_message("ERROR", {"error": "Missing message ID"})
+                        else:
+                            # Convert message_id to string and check existence
+                            message_id = str(message_id)
+                            print(f"Converted message ID to string: {message_id}")
                             
-                        
-                        # Convert message_id to string and check existence
-                        message_id = str(message_id)
-                        if message_id not in data["flagged_messages"]:
-                            response = create_message("ERROR", {"error": "Message not found in flagged messages"})
-                            conn.send(response.encode())
-                            return
-                        
-                        # Remove message from flagged_messages
-                        try:
-                            del data["flagged_messages"][message_id]
-                            print(f"Message removed: {message_id}")
-                            
-                            # Save changes
-                            save_data(data)
-                            print("Changes saved to data.json")
-                            
-                            # Send success response
-                            response = create_message("SUCCESS", {
-                                "message": "Message removed from flagged messages",
-                                "message_id": message_id
-                            })
-                            
-                        except Exception as e:
-                            print(f"Error processing message: {str(e)}")
-                            response = create_message("ERROR", {"error": f"Failed to process message: {str(e)}"})
-                        
-                        print(f"Sending response: {response}")
-                        conn.send(response.encode())
-                        return
-                        
+                            if message_id not in data["flagged_messages"]:
+                                print(f"Error: Message {message_id} not found in flagged messages")
+                                print(f"Available message IDs: {list(data['flagged_messages'].keys())}")
+                                response = create_message("ERROR", {"error": "Message not found in flagged messages"})
+                            else:
+                                # Remove message from flagged_messages
+                                try:
+                                    print(f"Attempting to remove message {message_id}")
+                                    del data["flagged_messages"][message_id]
+                                    print(f"Message removed successfully")
+                                    
+                                    # Save changes
+                                    save_data(data)
+                                    print("Changes saved to data.json")
+                                    
+                                    # Send success response
+                                    response = create_message("SUCCESS", {
+                                        "message": "Message removed from flagged messages",
+                                        "message_id": message_id
+                                    })
+                                    print(f"Success response created: {response}")
+                                    
+                                except Exception as e:
+                                    print(f"Error processing message: {str(e)}")
+                                    print(f"Error type: {type(e)}")
+                                    import traceback
+                                    print(f"Traceback: {traceback.format_exc()}")
+                                    response = create_message("ERROR", {"error": f"Failed to process message: {str(e)}"})
+                    
                     except Exception as e:
                         print(f"Error in IGNORE_MESSAGE handler: {str(e)}")
+                        print(f"Error type: {type(e)}")
+                        import traceback
+                        print(f"Traceback: {traceback.format_exc()}")
                         response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
-                        conn.send(response.encode())
-                        return
 
                 elif message_type == MESSAGE_TYPES["BLOCK_MESSAGE"]:
                     try:
@@ -569,58 +546,68 @@ def handle_client(conn, address):
                         # Validate required fields
                         if not message_id or not username:
                             response = create_message("ERROR", {"error": "Missing required fields"})
-                            conn.send(response.encode())
-                            return
-                            
-                        
-                        # Get the message from flagged messages
-                        message_id = str(message_id)
-                        if message_id not in data["flagged_messages"]:
-                            response = create_message("ERROR", {"error": "Message not found in flagged messages"})
-                            conn.send(response.encode())
-                            return
-                            
-                        # Get the sender's token from the message
-                        flagged_message = data["flagged_messages"][message_id]
-                        sender_token = flagged_message.get("round_token")
-                        
-                        if not sender_token:
-                            response = create_message("ERROR", {"error": "Could not find sender's token"})
-                            conn.send(response.encode())
-                            return
-                            
-                        # Add token to banned tokens if not already banned
-                        if "banned_tokens" not in data:
-                            data["banned_tokens"] = []
-                            
-                        if sender_token not in data["banned_tokens"]:
-                            data["banned_tokens"].append(sender_token)
-                            print(f"Token '{sender_token}' added to banned tokens")
-                        
-                        # Remove the message from flagged messages
-                        del data["flagged_messages"][message_id]
-                        print(f"Message '{message_id}' removed from flagged messages")
-                        
-                        # Save changes
-                        save_data(data)
-                        print("Changes saved to data.json")
-                        
-                        # Send success response
-                        response = create_message("SUCCESS", {
-                            "message": "Sender's token blocked and message removed from flagged messages",
-                            "message_id": message_id,
-                            "blocked_token": sender_token
-                        })
-                        
-                        print(f"Sending response: {response}")
-                        conn.send(response.encode())
-                        return
+                        else:
+                            # Get the message from flagged messages
+                            message_id = str(message_id)
+                            if message_id not in data["flagged_messages"]:
+                                response = create_message("ERROR", {"error": "Message not found in flagged messages"})
+                            else:
+                                # Get the sender's token from the message
+                                flagged_message = data["flagged_messages"][message_id]
+                                sender_token = flagged_message.get("round_token")
+                                
+                                if not sender_token:
+                                    response = create_message("ERROR", {"error": "Could not find sender's token"})
+                                else:
+                                    # Add token to banned tokens if not already banned
+                                    if "banned_tokens" not in data:
+                                        data["banned_tokens"] = []
+                                        
+                                    if sender_token not in data["banned_tokens"]:
+                                        data["banned_tokens"].append(sender_token)
+                                        print(f"Token '{sender_token}' added to banned tokens")
+                                    
+                                    # Remove the message from flagged messages
+                                    del data["flagged_messages"][message_id]
+                                    print(f"Message '{message_id}' removed from flagged messages")
+                                    
+                                    # Save changes
+                                    save_data(data)
+                                    print("Changes saved to data.json")
+                                    
+                                    # Send success response
+                                    response = create_message("SUCCESS", {
+                                        "message": "Sender's token blocked and message removed from flagged messages",
+                                        "message_id": message_id,
+                                        "blocked_token": sender_token
+                                    })
                         
                     except Exception as e:
                         print(f"Error in BLOCK_MESSAGE handler: {str(e)}")
-                        response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
-                        conn.send(response.encode())
-                        return
+                        print(f"Error type: {type(e)}")
+                        import traceback
+                        print(f"Traceback: {traceback.format_exc()}")
+                        response = create_message("ERROR", {"error": f"Server error in BLOCK_MESSAGE: {str(e)}"})
+
+                elif message_type == MESSAGE_TYPES["BLOCK_USER"]:
+                    try:
+                        username = message_data.get("username")
+                        moderator = message_data.get("moderator")
+                        
+                        # Check if the requester is a moderator
+                        if moderator in data["users"] and data["users"][moderator]["role"] == "moderator":
+                            if block_user(username):
+                                response = create_message("SUCCESS", {"message": f"User {username} has been blocked"})
+                            else:
+                                response = create_message("ERROR", {"error": "Failed to block user"})
+                        else:
+                            response = create_message("ERROR", {"error": "Unauthorized: Only moderators can block users"})
+                    except Exception as e:
+                        print(f"Error in BLOCK_USER handler: {str(e)}")
+                        print(f"Error type: {type(e)}")
+                        import traceback
+                        print(f"Traceback: {traceback.format_exc()}")
+                        response = create_message("ERROR", {"error": f"Server error in BLOCK_USER: {str(e)}"})
 
                 elif message_type == MESSAGE_TYPES["GET_MODERATORS"]:
                     username = message_data.get("username")
@@ -649,13 +636,8 @@ def handle_client(conn, address):
                         response = create_message("SUCCESS", {
                             "moderators": moderators
                         })
-                        print(f"Sending response: {response}")
-                        conn.send(response.encode())
-                        return  # Exit after sending response
                     else:
                         response = create_message("ERROR", {"error": "Unauthorized or invalid user"})
-                        conn.send(response.encode())
-                        return  # Exit after sending response
 
                 elif message_type == MESSAGE_TYPES["REGISTER"]:
                     username = message_data.get("username")
@@ -688,9 +670,6 @@ def handle_client(conn, address):
                             "anonymous_id": data["users"][username]["anonymous_id"]
                         })
                     
-                    conn.send(response.encode())
-                    return
-
                 else:
                     print(f"Unknown message type: {message_type}")
                     response = create_message("ERROR", {"error": f"Unknown message type: {message_type}"})
@@ -714,6 +693,7 @@ def handle_client(conn, address):
                 break
             except Exception as e:
                 print(f"Error handling message: {str(e)}")
+                print(f"Exception type: {type(e)}")
                 response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
                 try:
                     conn.send(response.encode())
