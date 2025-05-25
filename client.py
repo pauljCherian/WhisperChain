@@ -340,10 +340,19 @@ def flag_message(message_id, reason):
     print(f"Reason: {reason}")
     print("=====================\n")
 
+    success, data = send_request(GET_MESSAGE_BY_ID, {"message_id": message_id})
+    if success:
+        encrypted_content = data.get("content")
+        content = decrypt_message(encrypted_content)
+    else:
+        print(f"Error getting message by ID: {data.get('error', 'Unknown error')}")
+        return False
+
     request_data = {
         "username": current_user,
         "message_id": message_id,
-        "reason": reason
+        "reason": reason, 
+        "content": content
     }
     print(f"Sending request: {request_data}")
 

@@ -108,6 +108,18 @@ def block_user(username):
         print(f"Error blocking user: {str(e)}")
         return False
 
+def get_message_by_id(message_id):
+    """
+    Search all users' inboxes and rounds for a message with the given message_id.
+    Returns the message dict if found, else None.
+    """
+    for recipient, inbox in data.get("encrypted_inboxes", {}).items():
+        for round_num, messages in inbox.items():
+            for msg in messages:
+                if str(msg.get("id")) == str(message_id) or str(msg.get("message_id")) == str(message_id):
+                    return msg
+    return None
+
 def handle_client(conn, address):
     """Handle client connection"""
     print(f"New connection from {address}")
@@ -317,7 +329,8 @@ def handle_client(conn, address):
                         username = message_data.get("username")
                         message_id = message_data.get("message_id")
                         reason = message_data.get("reason")
-                        
+                        content = message_data.get("content")
+
                         print(f"\n=== FLAG_MESSAGE Request ===")
                         print(f"Username: {username}")
                         print(f"Message ID: {message_id}")
@@ -325,39 +338,15 @@ def handle_client(conn, address):
                         print("========================\n")
                         
                         # Validate request
-                        if not all([username, message_id, reason]):
+                        if not all([username, message_id, reason, content]):
                             print("Missing required fields")
                             response = create_message("ERROR", {"error": "Missing required fields"})
                         elif username not in data["users"]:
                             print(f"Invalid user: {username}")
                             response = create_message("ERROR", {"error": "Invalid user"})
                         else:
-                            # Find the message in encrypted inboxes
-                            message_found = False
-                            flagged_msg = None
-                            recipient = None
-                            
-                            print("Searching for message in encrypted inboxes...")
-                            print(f"Current encrypted_inboxes: {json.dumps(data['encrypted_inboxes'], indent=2)}")
-                            
-                            for rec, inbox in data["encrypted_inboxes"].items():
-                                print(f"Checking recipient: {rec}")
-                                for round_num, messages in inbox.items():
-                                    print(f"Checking round: {round_num}")
-                                    for msg in messages:
-                                        print(f"Checking message ID: {msg.get('id')} against {message_id}")
-                                        if str(msg.get("id")) == str(message_id) or str(msg.get("message_id")) == str(message_id):
-                                            message_found = True
-                                            flagged_msg = msg
-                                            recipient = rec
-                                            print(f"Found message: {msg}")
-                                            break
-                                    if message_found:
-                                        break
-                                if message_found:
-                                    break
-                            
-                            if not message_found or not flagged_msg:
+                            flagged_msg = get_message_by_id(message_id)
+                            if not flagged_msg:
                                 print("Message not found in any inbox")
                                 response = create_message("ERROR", {"error": "Message not found"})
                             else:
@@ -372,8 +361,7 @@ def handle_client(conn, address):
                                     "flagged_by": username,
                                     "round": flagged_msg.get("round"),
                                     "round_token": flagged_msg.get("round_token"),
-                                    "recipient": recipient,
-                                    "original_message": flagged_msg
+                                    "recipient": recipient
                                 }
                                 
                                 print(f"Created flag entry: {json.dumps(flag_entry, indent=2)}")
@@ -393,7 +381,6 @@ def handle_client(conn, address):
                                 
                                 print(f"Message added to flagged_messages: {flag_entry}")
                                 response = create_message("SUCCESS", {"message": "Message flagged successfully"})
-                    
                     except Exception as e:
                         print(f"Error in FLAG_MESSAGE handler: {str(e)}")
                         response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
@@ -686,6 +673,17 @@ def handle_client(conn, address):
                     else:
                         response = create_message("ERROR", {"error": "User not found"})
                     
+                elif message_type == MESSAGE_TYPES["GET_MESSAGE_BY_ID"]:
+                    message_id = message_data.get("message_id")
+                    if not message_id:
+                        response = create_message("ERROR", {"error": "Missing message_id"})
+                    else:
+                        found_msg = get_message_by_id(message_id)
+                        if found_msg:
+                            response = create_message("SUCCESS", {"content": found_msg.get("content")})
+                        else:
+                            response = create_message("ERROR", {"error": "Message not found"})
+                
                 else:
                     print(f"Unknown message type: {message_type}")
                     response = create_message("ERROR", {"error": f"Unknown message type: {message_type}"})
