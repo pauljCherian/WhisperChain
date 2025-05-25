@@ -11,13 +11,41 @@
             "role": "user",
             "is_banned": false,
             "anonymous_id": "anon_53bSqD"
+        },
+        "alice": {
+            "password": "WEwz9HSd6vazgTREoMIGwQmE/2qHwQ9SpwQztK9g9WY=",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_BxlrbF"
+        },
+        "bob": {
+            "password": "EjnuJewlt2CSTOLcKXob7atryjNnGcJHn5DNW2Gd5n4=",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_tduvSJ"
+        },
+        "chicken": {
+            "password": "gftV2hvDn+XmlbvWSGtruDwaP9iaXpwsGPEdE2Q9yOc=",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_Wu7trf"
+        },
+        "pigeon": {
+            "password": "ZxEoRJpSwZ1YekZ/YiJjPCuRP+7QBBy7XeVl6TjsW6M=",
+            "role": "user",
+            "is_banned": false,
+            "anonymous_id": "anon_VKDT5L"
         }
     },
     "current_round": 1,
     "round_tokens": {
         "1": {
             "test_user": "brYJoFYawHLBZx72",
-            "recipient": "lal6UwKj93sKtvKW"
+            "recipient": "lal6UwKj93sKtvKW",
+            "alice": "hHWpk9wvTnF5qAt7",
+            "bob": "9MoF2wmkmEGIdtf1",
+            "chicken": "Hw6uDCHOSi5Gjx0k",
+            "pigeon": "0TjdqwQftiKKEs8y"
         }
     },
     "used_tokens": [],
