@@ -1,11 +1,13 @@
 import json
 import base64
 import socket
+import os
 from message_types import *
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # Global variables
 current_user = None
@@ -46,12 +48,31 @@ def load_user_role(username):
         return "user"  # Default to "user" if file not found
 
 def login(username, password):
+    # Get stored salt from client_credentials.json and hash the password with the salt
+    salt_b64 = read_json('client_credentials.json').get('salt')
+    salt = base64.b64decode(salt_b64.encode())  # Decode salt from JSON
+    
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+    )
+    hashed_password = base64.b64encode(kdf.derive(password.encode())).decode()
+
     """Login to the system"""
     global current_user, user_role, current_anonymous_id
-    
-    success, data = send_request(LOGIN, {
+
+    if username == "admin" or username == "moderator": 
+        ## don't hash the password for admin and moderator since they're hardcoded on the server
+            success, data = send_request(LOGIN, {
+            "username": username,
+            "password": password
+        })
+    else:
+        success, data = send_request(LOGIN, {
         "username": username,
-        "password": password
+        "password": hashed_password
     })
     
     if success:
@@ -65,39 +86,57 @@ def login(username, password):
         return True
     return False
 
-def create_account(username, password):
-    """Create a new account"""
-    # Hash & salt the password (placeholder for actual implementation)
-    hashed_password = password  # Replace with actual hashing
+def hash_password(password):
+    # Generate a random salt
+    salt = os.urandom(16)
+
+    ## hash the password with the salt using SHA256
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+    )
     
-    # Generate key pair
+    hashed_password = base64.b64encode(kdf.derive(password.encode())).decode()
+    salt_b64 = base64.b64encode(salt).decode()  # Encode salt for JSON storage
+    
+    return salt_b64, hashed_password
+
+def create_account_encryption(username, password):
+    ## hash the password with the salt using helper function
+    salt_b64, hashed_password = hash_password(password)
+    
+    ## create a new key pair for the user
     global private_key
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048
     )
     public_key = private_key.public_key()
+
+    ## convert the key pair to base64 for storage
+    private_key_b64 = base64.b64encode(private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )).decode()
+
+    public_key_b64 = base64.b64encode(public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )).decode()
     
-    # Send account creation request to server
-    request_data = {
-        'type': 'create_account',
+    ## store the credentials in client_credentials.json
+    credentials = {
         'username': username,
-        'password': hashed_password,
-        'public_key': public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        ).decode()
+        'private_key': private_key_b64,
+        'salt': salt_b64,  # Store base64 encoded salt
     }
-    
-    response = send_request("LOGIN", request_data)
-    
-    if response.get('type') == 'success':
-        print("Account created successfully")
-        # Automatically login
-        return login(username, password)
-    else:
-        print(f"Account creation failed: {response.get('error', 'Unknown error')}")
-        return False
+    write_json('client_credentials.json', credentials)
+
+    return public_key_b64, hashed_password
+
 
 def user_menu():
     """Main menu for regular users"""
@@ -219,14 +258,30 @@ def send_request(request_type, data=None):
         # Reset timeout to blocking mode
         client_socket.settimeout(None)
 
-def get_public_key(username):
-    response = send_request("LOGIN", {'username': username})
+def get_public_key(recipient):
+    """
+    Get a user's public key from the server
     
-    # if the response is a public key type of message then return the key
-    if response.get('type') == 'public_key':
-        return response.get('key')
+    Args:
+        recipient (str): The username of the recipient
+        
+    Returns:
+        str: The recipient's public key in PEM format
+        
+    Raises:
+        ValueError: If the public key cannot be retrieved
+    """
+    success, data = send_request(GET_PUBLIC_KEY, {'recipient': recipient})
     
-    return None
+    if not success:
+        raise ValueError(f"Failed to get public key for {recipient}: {data.get('error', 'Unknown error')}")
+        
+    public_key = data.get('public_key')
+   
+    if not public_key:
+        raise ValueError(f"No public key found for user {recipient}")
+        
+    return public_key
 
 def send_message(recipient, content):
     """Send a message to another user"""
@@ -240,19 +295,39 @@ def send_message(recipient, content):
         print("No round token available. Getting new token...")
         if not get_round_token():
             return False
-        
-    success, data = send_request(SEND_MESSAGE, {
-        "sender": current_user,
-        "recipient": recipient,
-        "content": content,
-        "token": current_round_token
-    })
     
-    if success:
-        print("Message sent successfully")
-        current_round_token = None  # Token used, clear it
-        return True
-    return False
+    try:
+        # Get and validate public key
+        public_key = get_public_key(recipient)
+        if not public_key:
+            print(f"Could not get public key for {recipient}")
+            return False
+            
+        # Encrypt the message
+        encrypted_message = encrypt_message(content, public_key)
+        
+        # Send the message
+        success, data = send_request(SEND_MESSAGE, {
+            "sender": current_user,
+            "recipient": recipient,
+            "content": encrypted_message,
+            "token": current_round_token
+        })
+        
+        if success:
+            print("Message sent successfully")
+            current_round_token = None  # Token used, clear it
+            return True
+        else:
+            print(f"Failed to send message: {data.get('error', 'Unknown error')}")
+            return False
+            
+    except ValueError as e:
+        print(f"Error: {str(e)}")
+        return False
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return False
 
 def flag_message(message_id, reason):
     """Flag a message for moderator review"""
@@ -330,16 +405,20 @@ def review_message(message_id, action):
         print(f"Error reviewing message: {data.get('error', 'Unknown error')}")
         return False
 
-def encrypt_message(message, public_key):
+def load_public_key(public_key_b64):
     """
-    Encrypt a message using the recipient's public key.
+    Load a public key from a base64-encoded PEM string.
+    """
+    key_bytes = base64.b64decode(public_key_b64)
+    return serialization.load_pem_public_key(key_bytes)
+
+def encrypt_message(message, public_key_b64):
+    """
+    Encrypt a message using the recipient's public key (base64-encoded PEM).
     Returns the encrypted message as a base64 string.
     """
-    # Convert the public key from string to RSA key object
-    public_key_obj = load_public_key(public_key)
-    
-    # Encrypt the message
-    encrypted = public_key_obj.encrypt(
+    public_key = load_public_key(public_key_b64)
+    encrypted = public_key.encrypt(
         message.encode(),
         padding.OAEP(
             mgf=padding.MGF1(algorithm=hashes.SHA256()),
@@ -347,9 +426,30 @@ def encrypt_message(message, public_key):
             label=None
         )
     )
-    
-    # Convert the encrypted bytes to base64 string for transmission
     return base64.b64encode(encrypted).decode()
+
+def decrypt_message(encrypted_message_b64):
+    """
+    Decrypt a base64-encoded encrypted message using the user's private key (base64-encoded PEM).
+    Returns the decrypted message as a string.
+    """
+    private_key_b64 = read_json('client_credentials.json').get('private_key')
+    if not private_key_b64:
+        raise ValueError("No private key found in credentials")
+    private_key = serialization.load_pem_private_key(
+        base64.b64decode(private_key_b64),
+        password=None
+    )
+    encrypted_bytes = base64.b64decode(encrypted_message_b64)
+    decrypted_bytes = private_key.decrypt(
+        encrypted_bytes,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return decrypted_bytes.decode()
 
 def read_messages():
     """Read messages from user's inbox"""
@@ -379,7 +479,7 @@ def read_messages():
             for msg in messages:
                 print(f"\nMessage ID: {msg['id']}")
                 print(f"From: {msg['sender_anonymous_id']}")
-                print(f"Content: {msg['content']}")
+                print(f"Content: {decrypt_message(msg['content'])}")
                 print(f"Timestamp: {msg['timestamp']}")
                 if msg.get('is_flagged'):
                     print("⚠️ This message has been flagged")
@@ -392,11 +492,6 @@ def read_messages():
     except Exception as e:
         print(f"Error: {str(e)}")
         return False
-
-def decrypt_message(encrypted_message, private_key):
-    # Implement decryption using the private key
-    # This is a placeholder - implement your decryption logic here
-    return base64.b64decode(encrypted_message.encode()).decode()
 
 def disconnect():
     # Tell the server you've disconnected, log out (automatic) 
@@ -655,10 +750,13 @@ def get_round_token():
     return False
 
 def register(username, password):
+    public_key, hashed_password = create_account_encryption(username, password)
+
     """Register a new user"""
     success, data = send_request(REGISTER, {
         "username": username,
-        "password": password
+        "password": hashed_password,
+        "public_key": public_key
     })
     
     if success:

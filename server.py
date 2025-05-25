@@ -642,6 +642,7 @@ def handle_client(conn, address):
                 elif message_type == MESSAGE_TYPES["REGISTER"]:
                     username = message_data.get("username")
                     password = message_data.get("password")
+                    public_key = message_data.get("public_key")
                     
                     print(f"\n=== Registration Attempt ===")
                     print(f"Username: {username}")
@@ -659,7 +660,8 @@ def handle_client(conn, address):
                             "password": password,
                             "role": "user",  # Default role
                             "anonymous_id": generate_anonymous_id(),
-                            "is_banned": False
+                            "is_banned": False,
+                            "public_key": public_key
                         }
                         save_data(data)
                         
@@ -669,6 +671,20 @@ def handle_client(conn, address):
                             "role": "user",
                             "anonymous_id": data["users"][username]["anonymous_id"]
                         })
+
+                elif message_type == MESSAGE_TYPES["GET_PUBLIC_KEY"]:
+                    recipient = message_data.get("recipient")
+                    
+                    if recipient in data["users"]:
+                        public_key = data["users"][recipient].get("public_key")
+                        if public_key:
+                            response = create_message("SUCCESS", {
+                                "public_key": public_key
+                            })
+                        else:
+                            response = create_message("ERROR", {"error": "User has no public key"})
+                    else:
+                        response = create_message("ERROR", {"error": "User not found"})
                     
                 else:
                     print(f"Unknown message type: {message_type}")
