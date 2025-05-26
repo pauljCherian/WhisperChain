@@ -1,2 +1,4 @@
 .DS_store
 test_*.py
+__pycache__/
+client_credentials.json
