@@ -1,108 +1,82 @@
 {
     "users": {
-        "chicken": {
-            "password": "5gqw6wpOVrvKWGF7UCcz7xVPFsgICyLVvua+FjXyYEs=",
-            "role": "user",
-            "anonymous_id": "anon_5UqSBo",
-            "is_banned": false,
-            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUE4QkhWT2I4SlNxbE9zUElSVDQxdQowSWxZR3d0QnJsT3dmby8rY040SlV4ZExMQklHNC9wdlFHeFBmZDhvTzJ5MWVZTitacjhWQlBYMDMvWHJEK0QzCnpkWDRUUFRNOWllRXAxV3RWYXBiTVFZSzMvbTlOMmYzQWtjWXd5aUlLUDFBZlJIVXRYWDQzMzI4bHd6eWNuUmkKSkxtWHFIdTJJTk04aWxodTM3L1RDWHUwNCtXbHlQRnZGczdjKzQrcUp0Zmp6QnA0enRnbjM2VUxQNU5uWVhMcQpwVm9FazlEYXhOdjBPUGZRY1NJazdMc0Z1MzRkVU5vaVJjem54azhJMnlFaVpLS0dXYURpaTNvZlhTN1NQZWo5Ck0zNXMvY3hPaE50Q2JLSm0vM1FjOXNaa1hEQVRWMVBiS3FUV3NGeGsyait4b0Z4bytCTktFRTBDQnpEeW1iMHoKRFFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+        "admin": {
+            "password": "admin",
+            "role": "admin"
         },
-        "pigeon": {
-            "password": "dArc7MeEITw5BdPgDseEp17gAyGIl4KK0P6gUn7WGaU=",
-            "role": "user",
-            "anonymous_id": "anon_GyY8Yj",
-            "is_banned": false,
-            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUExSXhUZThoUFM2UElhek9iNkZVTAo0cnJaSTI1YTN6VFpWeERvS3M0SlpjTWdOUlpmcThaZ3BhdFhmaUZzY2pUOW5FMzFzQXVyNXpuQnFQdU5XbVRiCjhhc1pzaVI3MHhWdmtXUEtTOHkxSnh6TU1VVk1WVzduRUtZQXVTaWgxRW9mbDNpYkUvZXN4ZHRjbU9tdEpybksKcVF2ejBIdDRTWEEzNHF1WDR6dU9iUmoxUUVoOHl3RWJCZXJvTEtVRnNEQzA0OHNDRzFvYjZlL3VJUCtBZWsybQpTd1ZRWmNtYzViTEVPaFBWd08xS2s0WTJiRWt1ZFo3WEFDTFpVUWRybmtzNDdra3NsZXlVenlsb1laNjdXNnRpCmdVS3BjNFpZRkY0VkJRTDhCWm9xRk5sN0FLSkJNZlh4NGNXalZydGVTMGRzcWtURkxocmpSYXhTZThlMTVRdi8KK1FJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+        "moderator": {
+            "password": "moderator",
+            "role": "moderator",
+            "anonymous_id": "anon_xBq8VR"
         },
-        "bluebird": {
-            "password": "QL2GTeLQUr9+h3jV9W3vsc94DYXBJOlOF0xBBTYcdlw=",
+        "lj1": {
+            "password": "Ap6pCI9sU/cu8ubNbQHIy6RQAzZKbyzK6mC4qneXfLM=",
             "role": "user",
-            "anonymous_id": "anon_w1j5lf",
+            "anonymous_id": "anon_luPcgC",
             "is_banned": false,
-            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF1QktGL1ljdHlBK0tWdHpES1FOeAo5VWZjcTJWV1UrU285QmlQdnd5ZC9qbWRmOXVub010ZnNLUVlsdld3eVFRMEVpNnNEdExvUlFrUkFNdnE3Y2dGCktueDBuR3hSOEptTC9FSWJBZ3YxZHlYaHBKajg2UzBFTXZianlrTk92YmRWR2ZmK29lTDhzamhMUXV2N2VLUGoKVXJKdWVrdFd2ZTFTNXNJZU92Y2hYWE5sNzF0azlZOWE2QllRRTBxUnR4NTNEMFZZa0l1Y0VFQzl5TzRkR29LMgpLTkxlcnV6YXorbk5nNmdHMzNsbUE1UzFOOW9TWmw5ZStoSkNvSkd0RUVuNUk2dUdOMFh4V1orS0l6Vkp0VUtlCmlJWWlONWowdnlWVjZxeTV1OENzLyt3MXhqcmNkcU5PY0xuMDBWOCtBaFFSazgwMkZWa2R5cVQ3TWZxM3JBZWEKcHdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUExcFpYeTNuNWlSL2FOSjltMmppYwp4bndMV0JUWmJFYjh4MUpTTktHUmxVRllyVDNyR3d3Q1QrK3RFWEFNQlZTeTk2cC82MVVQanZSaldvczA0RmxiCjFud3BCR0RiTld5Z3JtcExCS3dEMmthSVY4RmpKWWxQbmRrM2l3eDQvV1dNb0duOTc0aTl2YVN0YU93LzNGb0wKeEhtdkxvYXJZdXFneVpNK0lUMnUrWWcvK1g3S2E1YzZneDlrWHI1QUw1K3k2Uk1JeDFTMStHdTRObi9kM3EzUwpqaVJHVnZuclZ5T1VIdkdhU3krMGVxaklYZkh1bndMb3RLK1ZvWUtveEEzOGxDOWpiRmZHNXhiNUo0VWRRN1VECkRQVTJIbGs0N2t0RWY4NTJSS0FJeE1JT1FYTkdaNjZrOFhNVjVCY1A1U0JNVXpTdVljdkt2RE1hTEFsaXdxYVQKelFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
         },
-        "banana": {
-            "password": "KFKM4iaAmLVKXmEnKxYiCCv+NRy4604Wm7Gb1gMBWvA=",
+        "lj2": {
+            "password": "7XL7crpi0iiX4VMHE8ubCkx2Qkeykb/ivyKJA5AQk6o=",
             "role": "user",
-            "anonymous_id": "anon_CIsEPA",
+            "anonymous_id": "anon_MaLR7j",
             "is_banned": false,
-            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEwUW9ZeFBjUXd6TmpPa1ZYaFUwMwpQaUZrdmpMOS9XaVJlYTlHeWFIQWQ1dy9IZlZTVmpDQ29tRGhGN2xEOStHaityd2VuQ2REbll2YTNkQTMvOG9LCkZoWXF5azVBeFh5aSs5NzlYRW92eVl2b1dzUExwdWFORnE3dGJ1WGRybmFNL0VZUkZPS09pSHMxU2p3RVF4WHoKQlpQY0lxVHQ0RUVUZk8vYmZWMiswZ043TGtWR0k4czZlN0pkdDhhdVRoMDRuRGpoQjBreDRsSXhaejhVUnNQdApVR3RNZEs5UUIxcWZNUHk4QzJyaWZsTFozQlE0aS90T3JqeklwWlN0QzNlRVMxcjlSRUJNajN3RUlYR0RoTlBuClZISUxqODZmTytKZnZIK01tcTZIRXhuUHRjZklhQStOVk5YblBVamZvZkVYNmFMeEE4Szdkd0RnRFR2LzRuRSsKT3dJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFwUGN1QnVGbTA5dndnbDV4OUJKZQpxMmtLb1Z6Qm1IWUc4Uy85czYveDQ2UTB2VUNDTmY1NTJKRDc4aWZSQndOVWZLZ1JidVlZUzdWM2NSNU9rMGQxCmd2bHdHb1V6OWE0MWN2a1BMNXM1Z2V4aE9jRGt6aHZBMW1LMGpVRExqejJOVVhaOVF6UmxQS1hyS2Y0YW1YNGgKM1JNUGRvTjFpUEw1Qmh0N0x1Sngzekt5dUR3M2wzd2NhcXNQRGxxb3lIbloxTW11aUZOeDBTVzN2QnA4bDY4SQpvK0hzTVJYUEVhQ0xrWTF4bHVhNi9keUt3TGgybCsxSVB4Q2liU1RqYnJtNGJ0Y0Noa3VzQ3FiZmVEZFMvVEdYCklQUkl5QmVCWVJKaXJ5eGVOdFY3Ykh1V29vVnlQaWQ2L0NsQlhYU1p2MWlOUXRjWDZkNnI1YkFlNWdzWTZTZUQKUHdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
         },
-        "apple": {
-            "password": "kFWPI99w0CkvC/lnY1xsbD60Uv/K6iCsMQ2ICSTh5M8=",
+        "lj3": {
+            "password": "6PhZ42C/kqLzJSV0qisUjibvI4L5oQJmVDBV9evFpJc=",
             "role": "user",
-            "anonymous_id": "anon_puexkh",
+            "anonymous_id": "anon_W8Y5jA",
             "is_banned": false,
-            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUE4aW51d2xyVndxdkFNWEh4bUhKcgpOV29zeURPaE1JNUpVUzduUjVIbEtlcnhJZ2ViOU5YcU45N0Fscys2R2tVeEp1aGF1eTV0eUtSUkE2bmZ4Wll0CllmTHU3aUtYZFhDSGRmZVF6dmhoZG8rcTFzQ2RqcG5MZVZzVVpzNnlFZEZJSXQyZEFuOEgvM1ZJV1k5QjJ3T3gKUm9XWHdTQmFSYUxkUE5ma3cyTFp1ZjJNUGthZmlpMFlkU0l4U1BDZ1gxTWVxNTd6dE9WYWFyS2tYeTh4WGFzQgp3UXF2eFRZNlNXM3A4U1RkK1Z5Y2o1NXRIUWFwckEyZUFqZzVub016V0toRlYvTkZqRzBXdVVmcXQza3N2K0huCldHa0tncUgzMXQ1YlpOTEIwRDUyQmpqN3ZPOTJrR0d5dVh1SnIyNXgrUk9qTGt0Z21KUGZJVXJwanJiSjFIQ3oKUHdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
-        },
-        "water": {
-            "password": "Zp5HdG9gta78jvCH+3Vh+ATZq8hMHuujnEAuYrkztxY=",
-            "role": "user",
-            "anonymous_id": "anon_O1AdV4",
-            "is_banned": false,
-            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5WG9WdFFOc0tNbFd5bENjTjV1bgp1WlZJVXdGUFhuWUFMOG9iaXZXbk9yQVQ2N2JjSUpQVHhJMGZCSmx3RlFlV1ZNOFBMK3I0UnN1ckVMTmF0RTlpClFtU3Q5Z2JDWER4OS9sT1J5Ulo3VUViL3RPWW1ZWnNLdi9yTENnam9xQmRXMzlPWk9HMTYvNUVWT3Uxc1RvMzEKT0FsK0xmTjVwRFdRSXl5ZUZOK2xFcFRwbFZOek81ZXZLVUlMS1dQK2dQVWxUUGRHYmlMRS80R2hHbk9PeGdpYQpGMm1FOENUaXFNTTZHQUg4YUYxYXc0Z2pNUEhFaUhNU0ExYU9wbzVocEgrdFVFT3ZVOENETE91YTd1QUk1ZTVWCnFzVnlhdzBoSW9TbGpsazBHYnd4U1FvZFF5dUlNa2tlK3FGQ1I3WUU3M0h2NUh2dmNwZ2dkT245SG9LZGtYWjMKUVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEySW1QSVlEOVo1Q1VQdkMzMlNnRgp0TC9RRml2YTQyQ3liODVNaTBGcXlVaFUxcjFyUWFReDg4T1NJK1JGcmt4YVRtaUY5ODNyZGtCSDFZa2NjR1pmCm8rVlRZendQNW9KbEdvSjkybS84RDFUTTVnS2YxRzUyMkczUVZScU5QOGk3cUpwSHZ1YjJjQ2dQeElwWFV2VUEKNFQ3WDV2VnhoS0ZoRGwxZ0FNbkVJdm5oZEs1T0N5TUNNTGhGSjFDSk02d0F3cS9YZ25IR2lQamxkOG4zTlFjdApnNjlqTjBiZWF1VkFZclRqVzBhOXRuL1c1UFVKaG9IaEM0eFZlbTNVKzQ1akdqRDRrVVVFdFpNRjZoREFHOFI3Ckd3SDVGaUdzSTU2bWJkdG1ZdzhYNi9ySVBmR2Zsei80WjduTUJaQVpvanFCNXVWZ1p0TFY3RG1YM053ZXpzQWoKZndJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
         }
     },
     "current_round": 1,
     "round_tokens": {
         "1": {
-            "pigeon": "CwPzLAcQ64dVSiu4",
-            "bluebird": "FlTKfliKOKQXTVh5",
-            "apple": "JkQtN8FTxeZ9B3vf",
-            "water": "mJgwgrlvxQBTV97J"
+            "moderator": "yMkVNsBgCPZ9S10n",
+            "lj1": "UvFc199e5VGrq2k5",
+            "lj2": "azqUG23AzkfkC19x",
+            "lj3": "Osb4kduS0bWHgLSS"
         }
     },
     "used_tokens": [
-        "CwPzLAcQ64dVSiu4",
-        "FlTKfliKOKQXTVh5",
-        "JkQtN8FTxeZ9B3vf"
+        "UvFc199e5VGrq2k5",
+        "azqUG23AzkfkC19x"
     ],
-    "banned_tokens": [],
+    "banned_tokens": [
+        "azqUG23AzkfkC19x"
+    ],
     "messages": {},
     "flagged_messages": {},
     "encrypted_inboxes": {
-        "chicken": {
+        "lj2": {
             "1": [
                 {
-                    "id": "msg1748215582",
-                    "message_id": "msg1748215582",
-                    "sender": "pigeon",
-                    "sender_anonymous_id": "anon_GyY8Yj",
-                    "content": "dqtB/ZDCpzsCsLtATCsoRe/k+V1H2tVb0txTsgck+GjHd/J1+qbi899eEi9N8asPfu2wQF2p15GgvozV1dTzxrmzlqfHeRpXkkU7KhtOLX0vFnCH7cDbqqsc83oMzCBS5aDC0dpB9yHusymhbDYOf5O4q5TptMfWPbNTzczpweOOZPbLtqfS5kHZCDZEkIrBuNBZconVOfTuMm8bjjPRK4F/95t0u2U5YkKejUTCustoTP6yyoA8b334Pko9Ab+xShRvAhlh1K49+6Ojh8zoY9xSgRRUK15jq2bXQdNQR0Nd0ytMsL5sSQcI2uxCLqpQwOwDVH7/lbHCs5mMRVRKOg==",
-                    "timestamp": "2025-05-25T19:26:22.795789",
+                    "id": "msg1748226160",
+                    "message_id": "msg1748226160",
+                    "sender": "lj1",
+                    "sender_anonymous_id": "anon_luPcgC",
+                    "content": "m+uNFTf5gD7vGrUet5bGCLA/C7vZANKBpITtTGWADhO+cSCSmXgCZvIucDpmVYhfDcIBIWuIRTJ7sTkUTKtTqAUK8l/eU1CM33VL1FT4j0wOUGFDSjrQOaj7+vXofEu0KJGds4x4OGDnZmGanlrTkXRtL8/My92iNtC9A+5LXccM+5xmMIdNl71bp7TnQ1IUiklpFtlc3gI+N4qxMCFcoFRRFYnmuu2DE+Z0ug1thNa0ZwoBKPjdX/TFUrDHwQz3E1vb70/B+z9NBJ1Ly41wyfgNVns9u5RbXjQfBh8WZF+bRNrRAcUGhXr8A0G1H6zJQ4yJ31IVABuEa06Enz1MLQ==",
+                    "timestamp": "2025-05-25T22:22:40.875210",
                     "is_flagged": false,
                     "round": "1",
-                    "round_token": "CwPzLAcQ64dVSiu4"
+                    "round_token": "UvFc199e5VGrq2k5"
                 }
             ]
         },
-        "pigeon": {
+        "lj3": {
             "1": [
                 {
-                    "id": "msg1748215632",
-                    "message_id": "msg1748215632",
-                    "sender": "bluebird",
-                    "sender_anonymous_id": "anon_w1j5lf",
-                    "content": "dXI/KCKrVOfofE5UB5XPJPqv0A3W9/4kdHJDb4uPgrixOpFCVhyBmGaZvuJ5iHeT8hLJ+s06oksUUu52HCm5DBkpHd9neZTCSjpjoZErTF41yCuPnTZmpN63p/XOiA319ZIQla9awksP0ZF5T1QglEmOOyg8rCS6eD6tkAmH5MCKksm+dvPsJ99pvD2LuntPR1iCfrOBaIDiDhGB6orJPrKM3Od/BLkzwDLsW5BQ9FgMHO91RtUSuweH9GTKt07qoPD8WSXUSE/RZrku+7LD2kRQXHkxZBUYPnq7xKdyvValXasI40u9EQbt2gchHpH7FJz0xsazd1XZqbDwhvpvAg==",
-                    "timestamp": "2025-05-25T19:27:12.135588",
+                    "id": "msg1748226371",
+                    "message_id": "msg1748226371",
+                    "sender": "lj2",
+                    "sender_anonymous_id": "anon_MaLR7j",
+                    "content": "0oKcPkJu9obLMS5oqtCjz+tNxshgrrsTPlg4yqMdcsThBfvYnPBcybMCULn61XzC+tekEc94hMPBKm4lm/c+XAZk/SHtEPzYq3L5iATDAVuxxa+ryQKAMImwojnahofDYbjKpend/jtGsSll5lDX28OtfK01LzUfymI5jIKw3gle68JD/juPGXkUC/eqSmwye3HC4EWt2kThGqMnuZMuTo8yVri6Xkl8qYyzz2v2UAfbLuPzrVTJ2sFqX+rpWCBjzR0/xQ2fOdeTIPdwJnIDet7X2JxFYoZ79JUE05KaWJlWjyXkJz97y4t2rBB+0rv2Fa6LdCA5tV82+OyMBI8K8Q==",
+                    "timestamp": "2025-05-25T22:26:11.563918",
                     "is_flagged": false,
                     "round": "1",
-                    "round_token": "FlTKfliKOKQXTVh5"
-                }
-            ]
-        },
-        "banana": {
-            "1": [
-                {
-                    "id": "msg1748215802",
-                    "message_id": "msg1748215802",
-                    "sender": "apple",
-                    "sender_anonymous_id": "anon_puexkh",
-                    "content": "GEQfBe2ZvSkDD6tsFiF6Dz4JFik3ZRsOaM0zrv2YXneh3T5I+oYADS2Z84B9DpB85Rjv1yDXawDVUwtLYkoRd87aEvg9U09jMNp7dchQrF/gawUU+iQHwjitVaaPkeVoah9SZo82OgCI+iC39GR77ReUBP3FeWQ39M9MJb+AglYQ6hFhFf4cBK0x59LIgQ5O59DJohx79IPUFDduENh/S2XPHZBkVggTB7HdGQsBZerO0GtDtftAanTUdD0HjzGAWgYQYdP3h+h9u6o83Bsz2VUfP3XUIlwsDM178UvwmwW2hrEh3Pzo7C6oZHW/FVLYd333V10fsyYXX26AQ6UzxQ==",
-                    "timestamp": "2025-05-25T19:30:02.712189",
-                    "is_flagged": false,
-                    "round": "1",
-                    "round_token": "JkQtN8FTxeZ9B3vf"
+                    "round_token": "azqUG23AzkfkC19x"
                 }
             ]
         }
