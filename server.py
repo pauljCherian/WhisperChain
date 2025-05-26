@@ -704,6 +704,32 @@ def handle_client(conn, address):
                     else:
                         response = create_message("ERROR", {"error": "User not found"})
                     
+                elif message_type == MESSAGE_TYPES["APPOINT_MODERATOR"]:
+                    try:
+                        admin = message_data.get("admin")
+                        target_user = message_data.get("target_user")
+                        
+                        print(f"\n=== Appoint Moderator Request ===")
+                        print(f"Admin: {admin}")
+                        print(f"Target User: {target_user}")
+                        print("===============================\n")
+                        
+                        # Check if admin exists and is actually an admin
+                        if not admin or admin not in data["users"] or data["users"][admin]["role"] != "admin":
+                            response = create_message("ERROR", {"error": "Unauthorized: Only admins can appoint moderators"})
+                        # Check if target user exists
+                        elif not target_user or target_user not in data["users"]:
+                            response = create_message("ERROR", {"error": "Target user does not exist"})
+                        else:
+                            # Update target user's role to moderator
+                            data["users"][target_user]["role"] = "moderator"
+                            save_data(data)
+                            response = create_message("SUCCESS", {"message": f"User {target_user} is now a moderator"})
+                            
+                    except Exception as e:
+                        print(f"Error in APPOINT_MODERATOR handler: {str(e)}")
+                        response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
+                    
                 else:
                     print(f"Unknown message type: {message_type}")
                     response = create_message("ERROR", {"error": f"Unknown message type: {message_type}"})

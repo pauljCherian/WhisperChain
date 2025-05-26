@@ -4,3 +4,6 @@
 {"timestamp": "2025-05-25T19:30:02.713933", "action": "SEND_MESSAGE", "user_role": "user", "round_token": "JkQtN8FTxeZ9B3vf", "round_number": 1, "event_details": {"success": true, "recipient": "banana", "anonymous_id": "anon_puexkh"}}
 {"timestamp": "2025-05-25T19:30:47.501053", "action": "REGISTRATION", "user_role": "unregistered", "round_token": null, "round_number": 1, "event_details": {"success": true, "username": "water"}}
 {"timestamp": "2025-05-25T19:31:01.687543", "action": "LOGIN", "user_role": "user", "round_token": null, "round_number": 1, "event_details": {"success": true, "username": "water"}}
+{"timestamp": "2025-05-25T23:40:08.910348", "action": "REGISTRATION", "user_role": "unregistered", "round_token": null, "round_number": 1, "event_details": {"success": true, "username": "l1"}}
+{"timestamp": "2025-05-25T23:41:04.891386", "action": "REGISTRATION", "user_role": "unregistered", "round_token": null, "round_number": 1, "event_details": {"success": true, "username": "l2"}}
+{"timestamp": "2025-05-25T23:57:58.253596", "action": "REGISTRATION", "user_role": "unregistered", "round_token": null, "round_number": 1, "event_details": {"success": true, "username": "hiii"}}
