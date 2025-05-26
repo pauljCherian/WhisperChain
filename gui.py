@@ -33,8 +33,14 @@ class ConnectionManager:
 class MessagingApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Messaging Client")
+        self.title("Secure Messaging Client (Shh!)")
         self.geometry("500x600")
+        
+        # Set colors and font
+        self.configure(bg='#E6E6FA')  # Light lavender background
+        self.text_color = '#4B0082'  # Dark purple text
+        self.font = ('Georgia', 16)  # Larger Georgia font
+        
         self.current_user = None
         self.user_role = None
         self.conn_manager = ConnectionManager()
@@ -42,11 +48,32 @@ class MessagingApp(tk.Tk):
         self.current_round = 1
         self.current_round_token = None
         
-        # Create UI elements
-        self.output_area = scrolledtext.ScrolledText(self, height=15, width=60, state='disabled')
-        self.output_area.pack(pady=10)
-        self.main_frame = tk.Frame(self)
-        self.main_frame.pack()
+        # Create output area with a border and custom scrollbar
+        output_frame = tk.Frame(self, bg='#E6E6FA', highlightbackground=self.text_color, highlightthickness=3)
+        output_frame.pack(pady=10, padx=40, fill='x', expand=False)
+
+        self.output_area = tk.Text(
+            output_frame,
+            height=15,
+            width=60,
+            state='disabled',
+            bg='#E6E6FA',
+            fg=self.text_color,
+            font=self.font,
+            bd=0,
+            highlightthickness=0,
+            insertbackground=self.text_color,
+            selectbackground='#D1C4E9',
+            selectforeground=self.text_color
+        )
+        scrollbar = tk.Scrollbar(output_frame, command=self.output_area.yview, bg='#E6E6FA', troughcolor='#E6E6FA')
+        self.output_area['yscrollcommand'] = scrollbar.set
+
+        self.output_area.pack(side=tk.LEFT, fill='both', expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill='y')
+
+        self.main_frame = tk.Frame(self, bg='#E6E6FA')
+        self.main_frame.pack(padx=40, fill='x', expand=False)  # Centered, equal padding
         
         # Initialize connection and show welcome screen
         if self.ensure_connection():
@@ -156,20 +183,24 @@ class MessagingApp(tk.Tk):
 
     def show_welcome_screen(self):
         self.clear_main_frame()
-        tk.Label(self.main_frame, text="Welcome to the Messaging Client!").pack(pady=10)
-        tk.Button(self.main_frame, text="Login", width=15, command=self.show_login_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Register", width=15, command=self.show_register_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Exit", width=15, command=self.quit).pack(pady=5)
+        tk.Label(self.main_frame, text="Welcome to the Messaging Client!", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Button(self.main_frame, text="Login", width=15, command=self.show_login_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Register", width=15, command=self.show_register_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Exit", width=15, command=self.quit,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_login_screen(self):
         self.clear_main_frame()
-        tk.Label(self.main_frame, text="Login").pack(pady=10)
-        tk.Label(self.main_frame, text="Username:").pack()
-        username_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Login", bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Label(self.main_frame, text="Username:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        username_entry = tk.Entry(self.main_frame, font=self.font)
         username_entry.pack()
         username_entry.focus_set()
-        tk.Label(self.main_frame, text="Password:").pack()
-        password_entry = tk.Entry(self.main_frame, show="*")
+        tk.Label(self.main_frame, text="Password:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        password_entry = tk.Entry(self.main_frame, show="*", font=self.font)
         password_entry.pack()
         def attempt_login():
             if not self.ensure_connection():
@@ -216,18 +247,20 @@ class MessagingApp(tk.Tk):
                 self.show_role_menu()
             else:
                 messagebox.showerror("Login Failed", response.get("error", "Invalid username or password."))
-        tk.Button(self.main_frame, text="Login", command=attempt_login).pack(pady=5)
-        tk.Button(self.main_frame, text="Back", command=self.show_welcome_screen).pack(pady=5)
+        tk.Button(self.main_frame, text="Login", command=attempt_login,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_welcome_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_register_screen(self):
         self.clear_main_frame()
-        tk.Label(self.main_frame, text="Register").pack(pady=10)
-        tk.Label(self.main_frame, text="Username:").pack()
-        username_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Register", bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Label(self.main_frame, text="Username:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        username_entry = tk.Entry(self.main_frame, font=self.font)
         username_entry.pack()
         username_entry.focus_set()
-        tk.Label(self.main_frame, text="Password:").pack()
-        password_entry = tk.Entry(self.main_frame, show="*")
+        tk.Label(self.main_frame, text="Password:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        password_entry = tk.Entry(self.main_frame, show="*", font=self.font)
         password_entry.pack()
         def attempt_register():
             if not self.ensure_connection():
@@ -279,8 +312,10 @@ class MessagingApp(tk.Tk):
                     event_details={"success": False, "username": username, "error": str(e)}
                 )
                 messagebox.showerror("Registration Error", f"Error during registration: {str(e)}")
-        tk.Button(self.main_frame, text="Register", command=attempt_register).pack(pady=5)
-        tk.Button(self.main_frame, text="Back", command=self.show_welcome_screen).pack(pady=5)
+        tk.Button(self.main_frame, text="Register", command=attempt_register,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_welcome_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_role_menu(self):
         self.clear_main_frame()
@@ -293,21 +328,26 @@ class MessagingApp(tk.Tk):
 
     def show_user_menu(self):
         self.clear_main_frame()
-        tk.Label(self.main_frame, text=f"User Menu ({self.current_user})").pack(pady=10)
-        tk.Button(self.main_frame, text="Send Message", width=20, command=self.show_send_message_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Read Messages", width=20, command=self.show_read_messages_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Flag Message", width=20, command=self.show_flag_message_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Logout", width=20, command=self.show_welcome_screen).pack(pady=5)
+        tk.Label(self.main_frame, text=f"User Menu ({self.current_user})", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Button(self.main_frame, text="Send Message", width=20, command=self.show_send_message_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Read Messages", width=20, command=self.show_read_messages_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Flag Message", width=20, command=self.show_flag_message_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Logout", width=20, command=self.show_welcome_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_send_message_screen(self):
         self.clear_main_frame()
-        tk.Label(self.main_frame, text="Send Message").pack(pady=10)
-        tk.Label(self.main_frame, text="Recipient:").pack()
-        recipient_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Send Message", bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Label(self.main_frame, text="Recipient:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        recipient_entry = tk.Entry(self.main_frame, font=self.font)
         recipient_entry.pack()
         recipient_entry.focus_set()
-        tk.Label(self.main_frame, text="Message:").pack()
-        message_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Message:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        message_entry = tk.Entry(self.main_frame, font=self.font)
         message_entry.pack()
         def send():
             if not self.ensure_connection():
@@ -362,14 +402,16 @@ class MessagingApp(tk.Tk):
             except Exception as e:
                 self.display_output(f"Error sending message: {str(e)}")
             self.show_user_menu()
-        tk.Button(self.main_frame, text="Send", command=send).pack(pady=5)
-        tk.Button(self.main_frame, text="Back", command=self.show_user_menu).pack(pady=5)
+        tk.Button(self.main_frame, text="Send", command=send,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_user_menu,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_read_messages_screen(self):
         self.clear_main_frame()
-        tk.Label(self.main_frame, text="Read Messages").pack(pady=10)
-        tk.Label(self.main_frame, text="Round Number:").pack()
-        round_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Read Messages", bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Label(self.main_frame, text="Round Number:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        round_entry = tk.Entry(self.main_frame, font=self.font)
         round_entry.pack()
         round_entry.focus_set()
         def retrieve():
@@ -398,18 +440,20 @@ class MessagingApp(tk.Tk):
             else:
                 self.display_output(f"Failed to retrieve messages: {response.get('error', 'Unknown error')}")
             self.show_user_menu()
-        tk.Button(self.main_frame, text="Read", command=retrieve).pack(pady=5)
-        tk.Button(self.main_frame, text="Back", command=self.show_user_menu).pack(pady=5)
+        tk.Button(self.main_frame, text="Read", command=retrieve,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_user_menu,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_flag_message_screen(self):
         self.clear_main_frame()
-        tk.Label(self.main_frame, text="Flag Message").pack(pady=10)
-        tk.Label(self.main_frame, text="Message ID:").pack()
-        msgid_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Flag Message", bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Label(self.main_frame, text="Message ID:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        msgid_entry = tk.Entry(self.main_frame, font=self.font)
         msgid_entry.pack()
         msgid_entry.focus_set()
-        tk.Label(self.main_frame, text="Reason:").pack()
-        reason_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Reason:", bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        reason_entry = tk.Entry(self.main_frame, font=self.font)
         reason_entry.pack()
         def flag():
             if not self.ensure_connection():
@@ -441,8 +485,10 @@ class MessagingApp(tk.Tk):
             else:
                 self.display_output(f"Failed to get message: {response.get('error', 'Unknown error')}")
             self.show_user_menu()
-        tk.Button(self.main_frame, text="Flag", command=flag).pack(pady=5)
-        tk.Button(self.main_frame, text="Back", command=self.show_user_menu).pack(pady=5)
+        tk.Button(self.main_frame, text="Flag", command=flag,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_user_menu,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_moderator_menu(self):
         self.clear_main_frame()
@@ -451,11 +497,16 @@ class MessagingApp(tk.Tk):
             self.show_welcome_screen()
             return
             
-        tk.Label(self.main_frame, text=f"Moderator Menu ({self.current_user})").pack(pady=10)
-        tk.Button(self.main_frame, text="Review Flagged Messages", width=25, command=self.show_review_flagged_messages_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Block User", width=25, command=self.show_block_user_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="View Audit Log", width=25, command=self.show_view_audit_log_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Logout", width=25, command=self.show_welcome_screen).pack(pady=5)
+        tk.Label(self.main_frame, text=f"Moderator Menu ({self.current_user})", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Button(self.main_frame, text="Review Flagged Messages", width=25, command=self.show_review_flagged_messages_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Block User", width=25, command=self.show_block_user_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="View Audit Log", width=25, command=self.show_view_audit_log_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Logout", width=25, command=self.show_welcome_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_admin_menu(self):
         self.clear_main_frame()
@@ -464,19 +515,25 @@ class MessagingApp(tk.Tk):
             self.show_welcome_screen()
             return
             
-        tk.Label(self.main_frame, text=f"Admin Menu ({self.current_user})").pack(pady=10)
-        tk.Button(self.main_frame, text="Start New Round", width=20, command=self.show_start_new_round_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Appoint Moderator", width=20, command=self.show_appoint_moderator_screen).pack(pady=5)
-        tk.Button(self.main_frame, text="Logout", width=20, command=self.show_welcome_screen).pack(pady=5)
+        tk.Label(self.main_frame, text=f"Admin Menu ({self.current_user})", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Button(self.main_frame, text="Start New Round", width=20, command=self.show_start_new_round_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Appoint Moderator", width=20, command=self.show_appoint_moderator_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Logout", width=20, command=self.show_welcome_screen,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_review_flagged_messages_screen(self):
         self.clear_main_frame()
-        tk.Label(self.main_frame, text="Review Flagged Messages").pack(pady=10)
+        tk.Label(self.main_frame, text="Review Flagged Messages", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
         
         # Check if user is a moderator
         if self.user_role != "moderator":
             self.display_output("Error: Only moderators can access the queue")
-            tk.Button(self.main_frame, text="Back", command=self.show_moderator_menu).pack(pady=5)
+            tk.Button(self.main_frame, text="Back", command=self.show_moderator_menu,
+                     bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
             return
             
         # Get flagged messages directly from server
@@ -498,13 +555,14 @@ class MessagingApp(tk.Tk):
                     self.display_output(f"Timestamp: {msg.get('timestamp', 'Unknown')}")
                     self.display_output("-" * 50)
                 
-                tk.Label(self.main_frame, text="Message ID to review:").pack()
-                msg_id_entry = tk.Entry(self.main_frame)
+                tk.Label(self.main_frame, text="Message ID to review:", 
+                        bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+                msg_id_entry = tk.Entry(self.main_frame, font=self.font)
                 msg_id_entry.pack()
                 msg_id_entry.focus_set()
                 
                 # Create frame for action buttons
-                action_frame = tk.Frame(self.main_frame)
+                action_frame = tk.Frame(self.main_frame, bg='#E6E6FA')
                 action_frame.pack(pady=5)
                 
                 def ignore_message():
@@ -534,11 +592,14 @@ class MessagingApp(tk.Tk):
                         self.show_moderator_menu()
                 
                 # Add action buttons
-                tk.Button(action_frame, text="Ignore Message", command=ignore_message).pack(side=tk.LEFT, padx=5)
-                tk.Button(action_frame, text="Block Sender", command=block_sender).pack(side=tk.LEFT, padx=5)
+                tk.Button(action_frame, text="Ignore Message", command=ignore_message,
+                         bg='#E6E6FA', fg=self.text_color, font=self.font).pack(side=tk.LEFT, padx=5)
+                tk.Button(action_frame, text="Block Sender", command=block_sender,
+                         bg='#E6E6FA', fg=self.text_color, font=self.font).pack(side=tk.LEFT, padx=5)
         else:
             self.display_output(f"Failed to get flagged messages: {response.get('error', 'Unknown error')}")
-        tk.Button(self.main_frame, text="Back", command=self.show_moderator_menu).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_moderator_menu,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_block_user_screen(self):
         self.clear_main_frame()
@@ -547,9 +608,11 @@ class MessagingApp(tk.Tk):
             self.show_moderator_menu()
             return
             
-        tk.Label(self.main_frame, text="Block User").pack(pady=10)
-        tk.Label(self.main_frame, text="Username to block:").pack()
-        username_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Block User", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Label(self.main_frame, text="Username to block:", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        username_entry = tk.Entry(self.main_frame, font=self.font)
         username_entry.pack()
         username_entry.focus_set()
         def block():
@@ -564,8 +627,10 @@ class MessagingApp(tk.Tk):
                 else:
                     self.display_output(f"Failed to block user: {response.get('error', 'Unknown error')}")
             self.show_moderator_menu()
-        tk.Button(self.main_frame, text="Block", command=block).pack(pady=5)
-        tk.Button(self.main_frame, text="Back", command=self.show_moderator_menu).pack(pady=5)
+        tk.Button(self.main_frame, text="Block", command=block,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_moderator_menu,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_view_audit_log_screen(self):
         self.clear_main_frame()
@@ -574,7 +639,8 @@ class MessagingApp(tk.Tk):
             self.show_moderator_menu()
             return
             
-        tk.Label(self.main_frame, text="Audit Log").pack(pady=10)
+        tk.Label(self.main_frame, text="Audit Log", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
         success, response = self.send_request_with_retry("GET_AUDIT_LOG", {
             "username": self.current_user
         })
@@ -592,7 +658,8 @@ class MessagingApp(tk.Tk):
                     self.display_output("-" * 50)
         else:
             self.display_output(f"Failed to get audit log: {response.get('error', 'Unknown error')}")
-        tk.Button(self.main_frame, text="Back", command=self.show_moderator_menu).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_moderator_menu,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_start_new_round_screen(self):
         self.clear_main_frame()
@@ -601,7 +668,8 @@ class MessagingApp(tk.Tk):
             self.show_admin_menu()
             return
             
-        tk.Label(self.main_frame, text="Start New Round").pack(pady=10)
+        tk.Label(self.main_frame, text="Start New Round", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
         def start():
             success, response = self.send_request_with_retry("NEXT_ROUND", {
                 "username": self.current_user
@@ -611,8 +679,10 @@ class MessagingApp(tk.Tk):
             else:
                 self.display_output(f"Failed to start new round: {response.get('error', 'Unknown error')}")
             self.show_admin_menu()
-        tk.Button(self.main_frame, text="Start", command=start).pack(pady=5)
-        tk.Button(self.main_frame, text="Back", command=self.show_admin_menu).pack(pady=5)
+        tk.Button(self.main_frame, text="Start", command=start,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_admin_menu,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def show_appoint_moderator_screen(self):
         self.clear_main_frame()
@@ -621,9 +691,11 @@ class MessagingApp(tk.Tk):
             self.show_admin_menu()
             return
             
-        tk.Label(self.main_frame, text="Appoint Moderator").pack(pady=10)
-        tk.Label(self.main_frame, text="Username to appoint:").pack()
-        username_entry = tk.Entry(self.main_frame)
+        tk.Label(self.main_frame, text="Appoint Moderator", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=10)
+        tk.Label(self.main_frame, text="Username to appoint:", 
+                bg='#E6E6FA', fg=self.text_color, font=self.font).pack()
+        username_entry = tk.Entry(self.main_frame, font=self.font)
         username_entry.pack()
         username_entry.focus_set()
         def appoint():
@@ -638,8 +710,10 @@ class MessagingApp(tk.Tk):
                 else:
                     self.display_output(f"Failed to appoint moderator: {response.get('error', 'Unknown error')}")
             self.show_admin_menu()
-        tk.Button(self.main_frame, text="Appoint", command=appoint).pack(pady=5)
-        tk.Button(self.main_frame, text="Back", command=self.show_admin_menu).pack(pady=5)
+        tk.Button(self.main_frame, text="Appoint", command=appoint,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
+        tk.Button(self.main_frame, text="Back", command=self.show_admin_menu,
+                 bg='#E6E6FA', fg=self.text_color, font=self.font).pack(pady=5)
 
     def display_output(self, text):
         self.output_area.config(state='normal')
