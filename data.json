@@ -2,7 +2,8 @@
     "users": {
         "admin": {
             "password": "admin",
-            "role": "admin"
+            "role": "admin",
+            "anonymous_id": "anon_tq6foW"
         },
         "moderator": {
             "password": "moderator",
@@ -13,12 +14,12 @@
             "password": "Ap6pCI9sU/cu8ubNbQHIy6RQAzZKbyzK6mC4qneXfLM=",
             "role": "user",
             "anonymous_id": "anon_luPcgC",
-            "is_banned": false,
+            "is_banned": true,
             "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUExcFpYeTNuNWlSL2FOSjltMmppYwp4bndMV0JUWmJFYjh4MUpTTktHUmxVRllyVDNyR3d3Q1QrK3RFWEFNQlZTeTk2cC82MVVQanZSaldvczA0RmxiCjFud3BCR0RiTld5Z3JtcExCS3dEMmthSVY4RmpKWWxQbmRrM2l3eDQvV1dNb0duOTc0aTl2YVN0YU93LzNGb0wKeEhtdkxvYXJZdXFneVpNK0lUMnUrWWcvK1g3S2E1YzZneDlrWHI1QUw1K3k2Uk1JeDFTMStHdTRObi9kM3EzUwpqaVJHVnZuclZ5T1VIdkdhU3krMGVxaklYZkh1bndMb3RLK1ZvWUtveEEzOGxDOWpiRmZHNXhiNUo0VWRRN1VECkRQVTJIbGs0N2t0RWY4NTJSS0FJeE1JT1FYTkdaNjZrOFhNVjVCY1A1U0JNVXpTdVljdkt2RE1hTEFsaXdxYVQKelFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
         },
         "lj2": {
             "password": "7XL7crpi0iiX4VMHE8ubCkx2Qkeykb/ivyKJA5AQk6o=",
-            "role": "user",
+            "role": "moderator",
             "anonymous_id": "anon_MaLR7j",
             "is_banned": false,
             "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFwUGN1QnVGbTA5dndnbDV4OUJKZQpxMmtLb1Z6Qm1IWUc4Uy85czYveDQ2UTB2VUNDTmY1NTJKRDc4aWZSQndOVWZLZ1JidVlZUzdWM2NSNU9rMGQxCmd2bHdHb1V6OWE0MWN2a1BMNXM1Z2V4aE9jRGt6aHZBMW1LMGpVRExqejJOVVhaOVF6UmxQS1hyS2Y0YW1YNGgKM1JNUGRvTjFpUEw1Qmh0N0x1Sngzekt5dUR3M2wzd2NhcXNQRGxxb3lIbloxTW11aUZOeDBTVzN2QnA4bDY4SQpvK0hzTVJYUEVhQ0xrWTF4bHVhNi9keUt3TGgybCsxSVB4Q2liU1RqYnJtNGJ0Y0Noa3VzQ3FiZmVEZFMvVEdYCklQUkl5QmVCWVJKaXJ5eGVOdFY3Ykh1V29vVnlQaWQ2L0NsQlhYU1p2MWlOUXRjWDZkNnI1YkFlNWdzWTZTZUQKUHdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
@@ -29,23 +30,44 @@
             "anonymous_id": "anon_W8Y5jA",
             "is_banned": false,
             "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEySW1QSVlEOVo1Q1VQdkMzMlNnRgp0TC9RRml2YTQyQ3liODVNaTBGcXlVaFUxcjFyUWFReDg4T1NJK1JGcmt4YVRtaUY5ODNyZGtCSDFZa2NjR1pmCm8rVlRZendQNW9KbEdvSjkybS84RDFUTTVnS2YxRzUyMkczUVZScU5QOGk3cUpwSHZ1YjJjQ2dQeElwWFV2VUEKNFQ3WDV2VnhoS0ZoRGwxZ0FNbkVJdm5oZEs1T0N5TUNNTGhGSjFDSk02d0F3cS9YZ25IR2lQamxkOG4zTlFjdApnNjlqTjBiZWF1VkFZclRqVzBhOXRuL1c1UFVKaG9IaEM0eFZlbTNVKzQ1akdqRDRrVVVFdFpNRjZoREFHOFI3Ckd3SDVGaUdzSTU2bWJkdG1ZdzhYNi9ySVBmR2Zsei80WjduTUJaQVpvanFCNXVWZ1p0TFY3RG1YM053ZXpzQWoKZndJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+        },
+        "l1": {
+            "password": "EM2xdOh5GkCaIMmXF9tvq59IKAQ/iY2IFqjYpDVKWbY=",
+            "role": "user",
+            "anonymous_id": "anon_G4s0dY",
+            "is_banned": false,
+            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF6Y2tLeCtOeVArSWQ0Njk2SWYvSwpjb2F1U0tsb3Zza2NVV2NaRGtWS1FXNlY0N29ReGJYT2krMkp0WnhnZzBWRzlUM0RacXVuQ3lTYkRwODJqRms4CldrUlU0VEMrNUI4NUpJWDhyODRVTS9BQVZWU3YxbzdXMHI4Wm0vTHE2REJQNC8xRDF5TnlBWTRaWC84YWxHRFoKNEU2N2FTbDZvbkVxMkNZYy9LZjJMeFNyUGR2dkgrZ3BPWUVuOHNuN0pzVWdPS25ITzZUMUNVd0ZkaGdpTTN3awpnZWZJVnBuV3ZsWkk3OEVIaEFGNkRhcUc0ODhjd2pZdDIzWVBvZWdQT3lDUVFDd2NNZzJZTWJhcEExcTNTM0ZzCkREeTJHVkRlZEZHdUowUmR6T0RrbmdpZDVEZXB3ellOdTdBWU42WFNidXQ1WndiTU9aRkRUQjNBYjg0ZkhXZkMKUXdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+        },
+        "l2": {
+            "password": "dHm8qavomL+A1e+XYC/RHaQFGcNRYFkdgHzVM9ZYN4Y=",
+            "role": "user",
+            "anonymous_id": "anon_wCOWoc",
+            "is_banned": false,
+            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFvR3RlOFFLNUl0M3FQZHovUzIvbQpCVUdoWmNZSnk1MjZ2ZUh1SVB2N0tkWENmU281UktUMEE0VGdTd2FXRjUwZDVueU9ZMlUxZE9vTW5XMlA1Q1dzCmwwVEkreExuLzNPaFhPUW1ZYjNiMXpZU3FuY1pyUjFmbjJBOFZOUzVvajFJZC9PU0UyNHNvZFZhaTlzcHVFKzEKckZndUM3SkJPVUpxeCszeWJOTy8yYkpjaXRGZ1BuMTNONFNxV0c2YXg1bXNjd3NHcXF0NlN6cW5BN2h3NVhEegpteVFKb2hGcS9NU2g2VGpka3U1aEl3aGV4NTdadnVSVjNQV2RzeDJ2VkR1V1g2YWpHK2xsczdDMkRtbU1rT3oxClA5RnFIVVFtbWZ4QktOVWpPV2ZuVnQvbnZGbUdGME9FQ1R2RENVTkpnbXZEWGZOaXhnNXlaMGswSjRvS3VwS1IKNFFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+        },
+        "hiii": {
+            "password": "7Tm/ZzThSUccKJIPVkDKG785jaZVDrX7Yb4vJvN3MKc=",
+            "role": "user",
+            "anonymous_id": "anon_JSTKe4",
+            "is_banned": false,
+            "public_key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEyRXZNUXp0Vy9zbk9VVUFuYlpjOQpRMFZHeXc1QWRwQ3pja1BvY1QwZHN5VFNZREtCOFpCUk5aL0E0cGM2WnpFM3J4c1RLazc4ZUtwRXF2OUVYcXVwCi81OWdhZHpVZTdra3Z4THFGMlV1L3FPZmordHdsRC83VUV0QzZYSlF0NmFvUW1vckNqMFVyK2hKRTBhY1hMMWoKRzViMHIvdHlZUnQzRURBR1RIUmVRUm1kYmlzTUw0VmFaZDNNWW51OG1SRlk4UTM3VklsSzdHK3N3aG1VbVlYcgpQTDVJMUkvTjg3WTVkYnZIc216bmdkeDZYY1QveWZhNkVnR1BiVUpHc0ZxYTFrdXo5VGFDdXl2V2lVTHZuNGRvCkJHVU1jSnYrQ01QTktXcVVuRk5KbVNhTVkrODdTY0ZnSWNHNW5GUnpsMnh5OVBJamV4aDIyQXQ0bmFPSll5dFoKaVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
         }
     },
-    "current_round": 1,
+    "current_round": 2,
     "round_tokens": {
         "1": {
             "moderator": "yMkVNsBgCPZ9S10n",
             "lj1": "UvFc199e5VGrq2k5",
             "lj2": "azqUG23AzkfkC19x",
-            "lj3": "Osb4kduS0bWHgLSS"
-        }
+            "lj3": "Osb4kduS0bWHgLSS",
+            "l1": "rN4LdKFnEvHhy8y6"
+        },
+        "2": {}
     },
-    "used_tokens": [
-        "UvFc199e5VGrq2k5",
-        "azqUG23AzkfkC19x"
-    ],
+    "used_tokens": [],
     "banned_tokens": [
-        "azqUG23AzkfkC19x"
+        "azqUG23AzkfkC19x",
+        "rN4LdKFnEvHhy8y6"
     ],
     "messages": {},
     "flagged_messages": {},
@@ -77,6 +99,21 @@
                     "is_flagged": false,
                     "round": "1",
                     "round_token": "azqUG23AzkfkC19x"
+                }
+            ]
+        },
+        "l2": {
+            "1": [
+                {
+                    "id": "msg1748230872",
+                    "message_id": "msg1748230872",
+                    "sender": "l1",
+                    "sender_anonymous_id": "anon_G4s0dY",
+                    "content": "RsTuSls09sTZGu960s6XQAB5Y7r5p5e9UGiR7EOPHXGkAtS5Ap+1oKu4nY/jS8aZcTckPGKBbdln7kn87q9d+WqyCRUnl25P++MgbEUU21ffhFhZpieJrehsEnUSIUC+qrEBp8+0oSfj6j4QWnLLwF4JAzfCpGAaBP8mSC8NFtMvvQPwyZiJfTSvjDkqWw94UFgWXpwTNMkTDISYx4PXABRkEKXdb+DFBCnnQ120l47G04cbtLJyjN0Xj18Xs8n5ph3rnCeBQOEc4iuWBo55zrJBMoGc34SghxWUJbnC7agXcDvomVEXt7xL1KDWDzO/96Tw+2DMSmCPxyJ69vwy/w==",
+                    "timestamp": "2025-05-25T23:41:12.964156",
+                    "is_flagged": false,
+                    "round": "1",
+                    "round_token": "rN4LdKFnEvHhy8y6"
                 }
             ]
         }
