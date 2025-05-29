@@ -639,6 +639,52 @@ def handle_client(conn, address):
                     else:
                         response = create_message("ERROR", {"error": "Unauthorized or invalid user"})
 
+                elif message_type == MESSAGE_TYPES["VIEW_AUDIT_LOG"]:
+                    try:
+                        username = message_data.get("username")
+                        start_date = message_data.get("start_date")
+                        end_date = message_data.get("end_date")
+                        
+                        print(f"\n=== View Audit Log Request ===")
+                        print(f"Username: {username}")
+                        print(f"Start date: {start_date}")
+                        print(f"End date: {end_date}")
+                        print("===========================\n")
+                        
+                        # Verify user exists and has proper role
+                        if not username or username not in data["users"]:
+                            response = create_message("ERROR", {"error": "Invalid user"})
+                        elif data["users"][username]["role"] not in ["moderator", "admin"]:
+                            response = create_message("ERROR", {"error": "Unauthorized - must be moderator or admin"})
+                        else:
+                            try:
+                                # Read audit log file
+                                with open('audit_log.json', 'r') as f:
+                                    audit_logs = json.load(f)
+                                
+                                # Filter logs if dates provided
+                                filtered_logs = audit_logs.get("logs", [])
+                                if start_date and end_date:
+                                    filtered_logs = [
+                                        log for log in filtered_logs 
+                                        if start_date <= log["timestamp"] <= end_date
+                                    ]
+                                
+                                print(f"Found {len(filtered_logs)} log entries")
+                                response = create_message("SUCCESS", {
+                                    "logs": filtered_logs
+                                })
+                            except FileNotFoundError:
+                                print("Audit log file not found")
+                                response = create_message("ERROR", {"error": "Audit log file not found"})
+                            except json.JSONDecodeError:
+                                print("Invalid audit log format")
+                                response = create_message("ERROR", {"error": "Invalid audit log format"})
+                                
+                    except Exception as e:
+                        print(f"Error in VIEW_AUDIT_LOG handler: {str(e)}")
+                        response = create_message("ERROR", {"error": f"Server error: {str(e)}"})
+
                 elif message_type == MESSAGE_TYPES["REGISTER"]:
                     username = message_data.get("username")
                     password = message_data.get("password")

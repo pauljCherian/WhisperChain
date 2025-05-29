@@ -631,7 +631,8 @@ def moderator_menu():
         print("\nModerator Menu:")
         print("[1] Review flagged messages")
         print("[2] Block user")
-        print("[3] View audit log")
+        if user_role in ["moderator", "admin"]:
+            print("[3] View audit log")
         print("[4] Exit")
         
         choice = input("Enter your choice: ")
@@ -642,7 +643,14 @@ def moderator_menu():
             username = input("Enter username to block: ")
             block_user(username)
         elif choice == "3":
-            view_audit_log()
+            if user_role in ["moderator", "admin"]:
+                # Optionally get date range
+                print("\nEnter date range (optional, press Enter to skip)")
+                start_date = input("Start date (YYYY-MM-DD): ").strip() or None
+                end_date = input("End date (YYYY-MM-DD): ").strip() or None
+                view_audit_log(start_date, end_date)
+            else:
+                print("Unauthorized - must be moderator or admin")
         elif choice == "4":
             print("Goodbye")
             disconnect()
@@ -776,32 +784,46 @@ def view_flagged_messages():
         error_msg = data.get('error', 'Unknown error') if isinstance(data, dict) else str(data)
         print(f"Error retrieving flagged messages: {error_msg}")
 
-def view_audit_log():
-    """View audit log (moderator only)"""
-    request_data = {
-        'type': 'view_audit_log',
-        'username': current_user
-    }
-    
-    response = send_request("LOGIN", request_data)
-    if 'error' in response:
-        print(f"Error: {response['error']}")
+def view_audit_log(start_date=None, end_date=None):
+    """View audit log (moderator/admin only)"""
+    if not current_user:
+        print("Error: Must be logged in to view audit log")
         return False
         
-    log_entries = response.get('log', [])
-    if not log_entries:
-        print("No audit log entries found")
+    if user_role not in ["moderator", "admin"]:
+        print("Error: Only moderators and admins can view the audit log")
+        return False
+    
+    request_data = {
+        "username": current_user,
+        "start_date": start_date,
+        "end_date": end_date
+    }
+    
+    success, data = send_request(MESSAGE_TYPES["VIEW_AUDIT_LOG"], request_data)
+    
+    if success:
+        logs = data.get("logs", [])
+        if not logs:
+            print("No audit log entries found")
+            return True
+            
+        print("\n=== Audit Log ===")
+        for entry in logs:
+            print("\nTimestamp:", entry.get("timestamp"))
+            print("Action:", entry.get("action"))
+            print("User Role:", entry.get("user_role"))
+            print("Round:", entry.get("round_number"))
+            if entry.get("event_details"):
+                print("Details:")
+                for key, value in entry["event_details"].items():
+                    if key != "password":  # Don't show sensitive information
+                        print(f"  {key}: {value}")
+            print("-" * 50)
         return True
-        
-    print("\nAudit Log:")
-    for entry in log_entries:
-        print(f"\nTimestamp: {entry.get('timestamp')}")
-        print(f"Action: {entry.get('action')}")
-        print(f"User: {entry.get('username')}")
-        print(f"Role: {entry.get('role')}")
-        print(f"Round: {entry.get('round')}")
-        print("-" * 50)
-    return True
+    else:
+        print(f"Error retrieving audit log: {data.get('error', 'Unknown error')}")
+        return False
 
 def view_all_users():
     """View all users in the system (admin only)"""
